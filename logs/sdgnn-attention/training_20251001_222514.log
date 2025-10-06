@@ -1,0 +1,44 @@
+2025-10-01 22:25:14,967 - INFO - ================================================================================
+2025-10-01 22:25:14,967 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-01 22:25:14,967 - INFO - ================================================================================
+2025-10-01 22:25:14,968 - INFO - NUM_NODE: 3783
+2025-10-01 22:25:14,968 - INFO - WEIGHT_DECAY: 0.001
+2025-10-01 22:25:14,968 - INFO - NODE_FEAT_SIZE: 20
+2025-10-01 22:25:14,968 - INFO - EMBEDDING_SIZE: 20
+2025-10-01 22:25:14,968 - INFO - LEARNING_RATE: 0.001
+2025-10-01 22:25:14,968 - INFO - BATCH_SIZE: 500
+2025-10-01 22:25:14,968 - INFO - EPOCHS: 1
+2025-10-01 22:25:14,969 - INFO - DROPOUT: 0.0
+2025-10-01 22:25:14,969 - INFO - AGGREGATOR: attention
+2025-10-01 22:25:14,969 - INFO - ALPHA: 1.0
+2025-10-01 22:25:14,969 - INFO - BETA: 1.0
+2025-10-01 22:25:14,969 - INFO - DEVICE: cpu
+2025-10-01 22:25:14,969 - INFO - ================================================================================
+2025-10-01 22:25:14,969 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-01 22:25:14,970 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 1, 'lr': 0.001, 'weight_decay': 0.001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'attention', 'alpha': 1.0, 'beta': 1.0, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 15, 'warmup_epochs': 10, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 500, 'triad_prob': 0.01, 'motif_scale': 1.0, 'motif_loss_type': 'l2'}
+2025-10-01 22:25:14,999 - INFO - Data loaded in 0.03s
+2025-10-01 22:25:14,999 - INFO - Building motif structures...
+2025-10-01 22:25:15,131 - INFO - Sampled 391 triads
+2025-10-01 22:25:15,138 - INFO - [motif:out_in_pos] nnz=299, mean=0.824553
+2025-10-01 22:25:15,139 - INFO - [motif:out_in_neg] nnz=19, mean=0.972449
+2025-10-01 22:25:15,139 - INFO - [motif:out_in_pos] shape=(3786, 3786), nnz=299, density=0.000021, range=(6.034305623303032e-06, 4.732075594628242)
+2025-10-01 22:25:15,139 - INFO - [motif:out_in_neg] shape=(3786, 3786), nnz=19, density=0.000001, range=(0.0016422439485129388, 4.390995685424677)
+2025-10-01 22:25:15,139 - INFO - [motif:co_out] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-01 22:25:15,139 - INFO - [motif:co_in] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-01 22:25:15,139 - INFO - Triads indexed for 389 unique nodes
+2025-10-01 22:25:15,140 - INFO - Motif structures built in 0.14s
+2025-10-01 22:25:16,199 - INFO - Total initialization time: 1.23s
+2025-10-01 22:25:16,199 - INFO - Starting training...
+2025-10-01 22:25:16,442 - INFO - motif_energy_pos=0.011487, motif_energy_neg=4.529628
+2025-10-01 22:25:16,478 - INFO - dot_pos_mu=4.445±0.167, dot_neg_mu=4.440±0.169
+2025-10-01 22:25:19,840 - INFO - Epoch 0: epoch=0, accuracy=0.5909, f1_micro=0.7314, f1_macro=0.4368, f1_weighted=0.5909, auc=0.6017, eval_time=3.6400
+2025-10-01 22:25:23,706 - INFO - Epoch 0: epoch=0, loss=0.3580, edge_loss=0.3580, motif_loss=0.0000, triad_loss=0.0000, alpha=0.0000, beta=0.0000, train_time=3.8475, epoch_time=7.5058, lr=0.0010, cache_hits=0, cache_misses=7000, cache_hit_rate=0.0000, cache_cache_size=7000
+2025-10-01 22:25:27,771 - INFO - Epoch 1: epoch=1, loss=0.3592, edge_loss=0.3177, motif_loss=0.0322, triad_loss=0.0093, alpha=0.0245, beta=0.0245, train_time=4.0646, epoch_time=4.0646, lr=0.0010, cache_hits=6476, cache_misses=7524, cache_hit_rate=0.4626, cache_cache_size=7524
+2025-10-01 22:25:31,716 - INFO - Epoch 2: epoch=2, loss=0.4202, edge_loss=0.3065, motif_loss=0.0816, triad_loss=0.0321, alpha=0.0955, beta=0.0955, train_time=3.9456, epoch_time=3.9456, lr=0.0010, cache_hits=13434, cache_misses=7566, cache_hit_rate=0.6397, cache_cache_size=7566
+2025-10-01 22:25:31,716 - INFO - ================================================================================
+2025-10-01 22:25:31,716 - INFO - Training completed!
+2025-10-01 22:25:31,716 - INFO - Best AUC: 0.6017 at epoch 0
+2025-10-01 22:25:31,716 - INFO - Total training time: 16.75s
+2025-10-01 22:25:31,716 - INFO - Cache statistics: {'hits': 13434, 'misses': 7566, 'hit_rate': 0.6397142857142857, 'cache_size': 7566}
+2025-10-01 22:25:32,190 - WARNING - Could not plot metrics: x and y must have same first dimension, but have shapes (4,) and (3,)
+2025-10-01 22:25:32,190 - INFO - ================================================================================

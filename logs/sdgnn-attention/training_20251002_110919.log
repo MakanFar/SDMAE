@@ -1,0 +1,58 @@
+2025-10-02 11:09:19,305 - INFO - ================================================================================
+2025-10-02 11:09:19,305 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-02 11:09:19,305 - INFO - ================================================================================
+2025-10-02 11:09:19,305 - INFO - NUM_NODE: 3783
+2025-10-02 11:09:19,305 - INFO - WEIGHT_DECAY: 0.001
+2025-10-02 11:09:19,306 - INFO - NODE_FEAT_SIZE: 20
+2025-10-02 11:09:19,306 - INFO - EMBEDDING_SIZE: 20
+2025-10-02 11:09:19,306 - INFO - LEARNING_RATE: 0.001
+2025-10-02 11:09:19,307 - INFO - BATCH_SIZE: 500
+2025-10-02 11:09:19,307 - INFO - EPOCHS: 50
+2025-10-02 11:09:19,307 - INFO - DROPOUT: 0.0
+2025-10-02 11:09:19,307 - INFO - AGGREGATOR: attention
+2025-10-02 11:09:19,307 - INFO - ALPHA: 0.001
+2025-10-02 11:09:19,307 - INFO - BETA: 0.001
+2025-10-02 11:09:19,307 - INFO - DEVICE: cpu
+2025-10-02 11:09:19,307 - INFO - ================================================================================
+2025-10-02 11:09:19,307 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-02 11:09:19,308 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 50, 'lr': 0.001, 'weight_decay': 0.001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'attention', 'alpha': 0.001, 'beta': 0.001, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 15, 'warmup_epochs': 10, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 1000, 'triad_prob': 0.8, 'motif_scale': 1.0, 'motif_loss_type': 'logistic'}
+2025-10-02 11:09:19,341 - INFO - Data loaded in 0.03s
+2025-10-02 11:09:19,341 - INFO - Building motif structures...
+2025-10-02 11:09:19,773 - INFO - Sampled 101500 triads
+2025-10-02 11:09:21,038 - INFO - [motif:out_in_pos] nnz=9179, mean=0.973225
+2025-10-02 11:09:21,038 - INFO - [motif:out_in_neg] nnz=846, mean=0.986251
+2025-10-02 11:09:21,038 - INFO - [motif:out_in_pos] shape=(3786, 3786), nnz=9179, density=0.000640, range=(1.408427829757165e-07, 11.439601133494048)
+2025-10-02 11:09:21,038 - INFO - [motif:out_in_neg] shape=(3786, 3786), nnz=846, density=0.000059, range=(8.331116810581753e-07, 6.417015232377665)
+2025-10-02 11:09:21,038 - INFO - [motif:co_out] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-02 11:09:21,038 - INFO - [motif:co_in] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-02 11:09:21,038 - INFO - Triads indexed for 3154 unique nodes
+2025-10-02 11:09:21,038 - INFO - Motif structures built in 1.70s
+2025-10-02 11:09:22,054 - INFO - Total initialization time: 2.75s
+2025-10-02 11:09:22,054 - INFO - Starting training...
+2025-10-02 11:09:22,314 - INFO - motif_energy_pos=0.011711, motif_energy_neg=4.453933
+2025-10-02 11:09:22,338 - INFO - dot_pos_mu=4.445±0.167, dot_neg_mu=4.440±0.169
+2025-10-02 11:09:25,794 - INFO - Epoch 0: epoch=0, accuracy=0.5909, f1_micro=0.7314, f1_macro=0.4368, f1_weighted=0.5909, auc=0.6017, eval_time=3.7388
+2025-10-02 11:09:29,264 - INFO - Epoch 0: epoch=0, loss=0.3580, edge_loss=0.3580, motif_loss=0.0000, triad_loss=0.0000, alpha=0.0000, beta=0.0000, train_time=3.4659, epoch_time=7.2098, lr=0.0010, cache_hits=0, cache_misses=7000, cache_hit_rate=0.0000, cache_cache_size=7000
+2025-10-02 11:09:35,614 - INFO -   Note: Motif loss is 0.00000606 (very small, may show as 0.0000)
+2025-10-02 11:09:35,614 - INFO - Epoch 1: epoch=1, loss=0.3229, edge_loss=0.3228, motif_loss=0.0000, triad_loss=0.0001, alpha=0.0000, beta=0.0000, train_time=6.3486, epoch_time=6.3486, lr=0.0010, cache_hits=6476, cache_misses=7524, cache_hit_rate=0.4626, cache_cache_size=7524
+2025-10-02 11:09:42,488 - INFO -   Note: Motif loss is 0.00002112 (very small, may show as 0.0000)
+2025-10-02 11:09:42,489 - INFO - Epoch 2: epoch=2, loss=0.3010, edge_loss=0.3007, motif_loss=0.0000, triad_loss=0.0002, alpha=0.0001, beta=0.0001, train_time=6.8741, epoch_time=6.8741, lr=0.0010, cache_hits=13434, cache_misses=7566, cache_hit_rate=0.6397, cache_cache_size=7566
+2025-10-02 11:09:49,136 - INFO -   Note: Motif loss is 0.00004466 (very small, may show as 0.0000)
+2025-10-02 11:09:49,136 - INFO - Epoch 3: epoch=3, loss=0.2859, edge_loss=0.2853, motif_loss=0.0000, triad_loss=0.0006, alpha=0.0002, beta=0.0002, train_time=6.6474, epoch_time=6.6474, lr=0.0010, cache_hits=20434, cache_misses=7566, cache_hit_rate=0.7298, cache_cache_size=7566
+2025-10-02 11:09:55,951 - INFO -   Note: Motif loss is 0.00006834 (very small, may show as 0.0000)
+2025-10-02 11:09:55,951 - INFO - Epoch 4: epoch=4, loss=0.2641, edge_loss=0.2632, motif_loss=0.0001, triad_loss=0.0009, alpha=0.0003, beta=0.0003, train_time=6.8146, epoch_time=6.8146, lr=0.0010, cache_hits=27434, cache_misses=7566, cache_hit_rate=0.7838, cache_cache_size=7566
+2025-10-02 11:09:56,249 - INFO - motif_energy_pos=0.090526, motif_energy_neg=1.648749
+2025-10-02 11:09:56,272 - INFO - dot_pos_mu=2.605±0.686, dot_neg_mu=1.460±0.377
+2025-10-02 11:09:59,244 - INFO - Epoch 5: epoch=5, accuracy=0.8464, f1_micro=0.9130, f1_macro=0.6286, f1_weighted=0.8464, auc=0.8651, eval_time=3.2934
+2025-10-02 11:10:06,119 - INFO -   Note: Motif loss is 0.00009053 (very small, may show as 0.0000)
+2025-10-02 11:10:06,119 - INFO - Epoch 5: epoch=5, loss=0.2339, edge_loss=0.2321, motif_loss=0.0001, triad_loss=0.0017, alpha=0.0005, beta=0.0005, train_time=6.8553, epoch_time=10.1677, lr=0.0010, cache_hits=34434, cache_misses=7566, cache_hit_rate=0.8199, cache_cache_size=7566
+2025-10-02 11:10:12,934 - INFO - Epoch 6: epoch=6, loss=0.2066, edge_loss=0.2035, motif_loss=0.0001, triad_loss=0.0030, alpha=0.0007, beta=0.0007, train_time=6.8157, epoch_time=6.8157, lr=0.0010, cache_hits=41434, cache_misses=7566, cache_hit_rate=0.8456, cache_cache_size=7566
+2025-10-02 11:10:19,605 - INFO - Epoch 7: epoch=7, loss=0.1823, edge_loss=0.1762, motif_loss=0.0001, triad_loss=0.0060, alpha=0.0008, beta=0.0008, train_time=6.6705, epoch_time=6.6705, lr=0.0010, cache_hits=48434, cache_misses=7566, cache_hit_rate=0.8649, cache_cache_size=7566
+2025-10-02 11:10:26,385 - INFO - Epoch 8: epoch=8, loss=0.1634, edge_loss=0.1541, motif_loss=0.0001, triad_loss=0.0091, alpha=0.0009, beta=0.0009, train_time=6.7801, epoch_time=6.7801, lr=0.0010, cache_hits=55434, cache_misses=7566, cache_hit_rate=0.8799, cache_cache_size=7566
+2025-10-02 11:10:33,155 - INFO - Epoch 9: epoch=9, loss=0.1625, edge_loss=0.1525, motif_loss=0.0001, triad_loss=0.0099, alpha=0.0010, beta=0.0010, train_time=6.7702, epoch_time=6.7702, lr=0.0010, cache_hits=62434, cache_misses=7566, cache_hit_rate=0.8919, cache_cache_size=7566
+2025-10-02 11:10:33,456 - INFO - motif_energy_pos=0.059332, motif_energy_neg=0.880958
+2025-10-02 11:10:33,478 - INFO - dot_pos_mu=5.101±2.599, dot_neg_mu=0.062±1.437
+2025-10-02 11:10:36,450 - INFO - Epoch 10: epoch=10, accuracy=0.8836, f1_micro=0.9354, f1_macro=0.6730, f1_weighted=0.8836, auc=0.8768, eval_time=3.2953
+2025-10-02 11:10:43,323 - INFO - Epoch 10: epoch=10, loss=0.1537, edge_loss=0.1445, motif_loss=0.0001, triad_loss=0.0091, alpha=0.0010, beta=0.0010, train_time=6.8723, epoch_time=10.1676, lr=0.0010, cache_hits=69434, cache_misses=7566, cache_hit_rate=0.9017, cache_cache_size=7566
+2025-10-02 11:10:50,059 - INFO - Epoch 11: epoch=11, loss=0.1466, edge_loss=0.1381, motif_loss=0.0001, triad_loss=0.0083, alpha=0.0010, beta=0.0010, train_time=6.7357, epoch_time=6.7357, lr=0.0010, cache_hits=76434, cache_misses=7566, cache_hit_rate=0.9099, cache_cache_size=7566
+2025-10-02 11:10:53,063 - WARNING - Training interrupted by user

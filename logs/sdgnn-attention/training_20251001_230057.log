@@ -1,0 +1,123 @@
+2025-10-01 23:00:57,476 - INFO - ================================================================================
+2025-10-01 23:00:57,476 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-01 23:00:57,476 - INFO - ================================================================================
+2025-10-01 23:00:57,476 - INFO - NUM_NODE: 3783
+2025-10-01 23:00:57,476 - INFO - WEIGHT_DECAY: 0.001
+2025-10-01 23:00:57,476 - INFO - NODE_FEAT_SIZE: 20
+2025-10-01 23:00:57,476 - INFO - EMBEDDING_SIZE: 20
+2025-10-01 23:00:57,476 - INFO - LEARNING_RATE: 0.001
+2025-10-01 23:00:57,476 - INFO - BATCH_SIZE: 500
+2025-10-01 23:00:57,476 - INFO - EPOCHS: 50
+2025-10-01 23:00:57,476 - INFO - DROPOUT: 0.0
+2025-10-01 23:00:57,476 - INFO - AGGREGATOR: attention
+2025-10-01 23:00:57,476 - INFO - ALPHA: 0.01
+2025-10-01 23:00:57,492 - INFO - BETA: 0.01
+2025-10-01 23:00:57,492 - INFO - DEVICE: cpu
+2025-10-01 23:00:57,492 - INFO - ================================================================================
+2025-10-01 23:00:57,492 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-01 23:00:57,492 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 50, 'lr': 0.001, 'weight_decay': 0.001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'attention', 'alpha': 0.01, 'beta': 0.01, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 15, 'warmup_epochs': 10, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 600, 'triad_prob': 0.6, 'motif_scale': 1.0, 'motif_loss_type': 'l2'}
+2025-10-01 23:00:57,519 - INFO - Data loaded in 0.03s
+2025-10-01 23:00:57,519 - INFO - Building motif structures...
+2025-10-01 23:00:57,742 - INFO - Sampled 38387 triads
+2025-10-01 23:00:58,218 - INFO - [motif:out_in_pos] nnz=6458, mean=0.977394
+2025-10-01 23:00:58,218 - INFO - [motif:out_in_neg] nnz=657, mean=0.986500
+2025-10-01 23:00:58,218 - INFO - [motif:out_in_pos] shape=(3786, 3786), nnz=6458, density=0.000451, range=(3.7097200034178907e-07, 8.881173820063271)
+2025-10-01 23:00:58,218 - INFO - [motif:out_in_neg] shape=(3786, 3786), nnz=657, density=0.000046, range=(4.2998173688656746e-07, 7.139874239749196)
+2025-10-01 23:00:58,218 - INFO - [motif:co_out] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-01 23:00:58,218 - INFO - [motif:co_in] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-01 23:00:58,218 - INFO - Triads indexed for 2751 unique nodes
+2025-10-01 23:00:58,218 - INFO - Motif structures built in 0.70s
+2025-10-01 23:00:59,251 - INFO - Total initialization time: 1.76s
+2025-10-01 23:00:59,251 - INFO - Starting training...
+2025-10-01 23:00:59,506 - INFO - motif_energy_pos=0.011719, motif_energy_neg=4.444794
+2025-10-01 23:00:59,542 - INFO - dot_pos_mu=4.445±0.167, dot_neg_mu=4.440±0.169
+2025-10-01 23:01:02,902 - INFO - Epoch 0: epoch=0, accuracy=0.5909, f1_micro=0.7314, f1_macro=0.4368, f1_weighted=0.5909, auc=0.6017, eval_time=3.6512
+2025-10-01 23:01:06,149 - INFO - Epoch 0: epoch=0, loss=0.3580, edge_loss=0.3580, motif_loss=0.0000, triad_loss=0.0000, alpha=0.0000, beta=0.0000, train_time=3.2467, epoch_time=6.8979, lr=0.0010, cache_hits=0, cache_misses=7000, cache_hit_rate=0.0000, cache_cache_size=7000
+2025-10-01 23:01:10,873 - INFO - Epoch 1: epoch=1, loss=0.3232, edge_loss=0.3228, motif_loss=0.0004, triad_loss=0.0001, alpha=0.0002, beta=0.0002, train_time=4.7241, epoch_time=4.7241, lr=0.0010, cache_hits=6476, cache_misses=7524, cache_hit_rate=0.4626, cache_cache_size=7524
+2025-10-01 23:01:15,574 - INFO - Epoch 2: epoch=2, loss=0.3021, edge_loss=0.3008, motif_loss=0.0010, triad_loss=0.0003, alpha=0.0010, beta=0.0010, train_time=4.7010, epoch_time=4.7010, lr=0.0010, cache_hits=13434, cache_misses=7566, cache_hit_rate=0.6397, cache_cache_size=7566
+2025-10-01 23:01:20,292 - INFO - Epoch 3: epoch=3, loss=0.2881, edge_loss=0.2851, motif_loss=0.0024, triad_loss=0.0005, alpha=0.0021, beta=0.0021, train_time=4.7178, epoch_time=4.7178, lr=0.0010, cache_hits=20434, cache_misses=7566, cache_hit_rate=0.7298, cache_cache_size=7566
+2025-10-01 23:01:24,997 - INFO - Epoch 4: epoch=4, loss=0.2672, edge_loss=0.2629, motif_loss=0.0034, triad_loss=0.0008, alpha=0.0035, beta=0.0035, train_time=4.7052, epoch_time=4.7052, lr=0.0010, cache_hits=27434, cache_misses=7566, cache_hit_rate=0.7838, cache_cache_size=7566
+2025-10-01 23:01:25,271 - INFO - motif_energy_pos=0.090912, motif_energy_neg=1.648762
+2025-10-01 23:01:25,287 - INFO - dot_pos_mu=2.606±0.693, dot_neg_mu=1.455±0.380
+2025-10-01 23:01:28,210 - INFO - Epoch 5: epoch=5, accuracy=0.8470, f1_micro=0.9134, f1_macro=0.6293, f1_weighted=0.8470, auc=0.8654, eval_time=3.2131
+2025-10-01 23:01:32,839 - INFO - Epoch 5: epoch=5, loss=0.2370, edge_loss=0.2315, motif_loss=0.0044, triad_loss=0.0011, alpha=0.0050, beta=0.0050, train_time=4.6287, epoch_time=7.8418, lr=0.0010, cache_hits=34434, cache_misses=7566, cache_hit_rate=0.8199, cache_cache_size=7566
+2025-10-01 23:01:37,529 - INFO - Epoch 6: epoch=6, loss=0.2081, edge_loss=0.2023, motif_loss=0.0045, triad_loss=0.0012, alpha=0.0065, beta=0.0065, train_time=4.6900, epoch_time=4.6900, lr=0.0010, cache_hits=41434, cache_misses=7566, cache_hit_rate=0.8456, cache_cache_size=7566
+2025-10-01 23:01:42,232 - INFO - Epoch 7: epoch=7, loss=0.1801, edge_loss=0.1745, motif_loss=0.0044, triad_loss=0.0013, alpha=0.0079, beta=0.0079, train_time=4.7027, epoch_time=4.7027, lr=0.0010, cache_hits=48434, cache_misses=7566, cache_hit_rate=0.8649, cache_cache_size=7566
+2025-10-01 23:01:46,980 - INFO - Epoch 8: epoch=8, loss=0.1575, edge_loss=0.1524, motif_loss=0.0037, triad_loss=0.0013, alpha=0.0090, beta=0.0090, train_time=4.7484, epoch_time=4.7484, lr=0.0010, cache_hits=55434, cache_misses=7566, cache_hit_rate=0.8799, cache_cache_size=7566
+2025-10-01 23:01:51,685 - INFO - Epoch 9: epoch=9, loss=0.1555, edge_loss=0.1507, motif_loss=0.0034, triad_loss=0.0014, alpha=0.0098, beta=0.0098, train_time=4.7049, epoch_time=4.7049, lr=0.0010, cache_hits=62434, cache_misses=7566, cache_hit_rate=0.8919, cache_cache_size=7566
+2025-10-01 23:01:51,922 - INFO - motif_energy_pos=0.059221, motif_energy_neg=0.848224
+2025-10-01 23:01:51,938 - INFO - dot_pos_mu=6.231±3.486, dot_neg_mu=-0.051±1.623
+2025-10-01 23:01:54,854 - INFO - Epoch 10: epoch=10, accuracy=0.8834, f1_micro=0.9353, f1_macro=0.6739, f1_weighted=0.8834, auc=0.8785, eval_time=3.1689
+2025-10-01 23:01:59,573 - INFO - Epoch 10: epoch=10, loss=0.1453, edge_loss=0.1407, motif_loss=0.0032, triad_loss=0.0014, alpha=0.0100, beta=0.0100, train_time=4.7195, epoch_time=7.8884, lr=0.0010, cache_hits=69434, cache_misses=7566, cache_hit_rate=0.9017, cache_cache_size=7566
+2025-10-01 23:02:04,329 - INFO - Epoch 11: epoch=11, loss=0.1380, edge_loss=0.1335, motif_loss=0.0033, triad_loss=0.0013, alpha=0.0100, beta=0.0100, train_time=4.7552, epoch_time=4.7552, lr=0.0010, cache_hits=76434, cache_misses=7566, cache_hit_rate=0.9099, cache_cache_size=7566
+2025-10-01 23:02:08,971 - INFO - Epoch 12: epoch=12, loss=0.1375, edge_loss=0.1330, motif_loss=0.0032, triad_loss=0.0013, alpha=0.0100, beta=0.0100, train_time=4.6428, epoch_time=4.6428, lr=0.0010, cache_hits=83434, cache_misses=7566, cache_hit_rate=0.9169, cache_cache_size=7566
+2025-10-01 23:02:13,703 - INFO - Epoch 13: epoch=13, loss=0.1349, edge_loss=0.1307, motif_loss=0.0030, triad_loss=0.0012, alpha=0.0100, beta=0.0100, train_time=4.7308, epoch_time=4.7308, lr=0.0010, cache_hits=90434, cache_misses=7566, cache_hit_rate=0.9228, cache_cache_size=7566
+2025-10-01 23:02:18,320 - INFO - Epoch 14: epoch=14, loss=0.1356, edge_loss=0.1311, motif_loss=0.0030, triad_loss=0.0014, alpha=0.0100, beta=0.0100, train_time=4.6169, epoch_time=4.6169, lr=0.0010, cache_hits=97434, cache_misses=7566, cache_hit_rate=0.9279, cache_cache_size=7566
+2025-10-01 23:02:18,558 - INFO - motif_energy_pos=0.061543, motif_energy_neg=0.729790
+2025-10-01 23:02:18,576 - INFO - dot_pos_mu=7.019±4.427, dot_neg_mu=-0.429±1.824
+2025-10-01 23:02:21,495 - INFO - Epoch 15: epoch=15, accuracy=0.8834, f1_micro=0.9354, f1_macro=0.6708, f1_weighted=0.8834, auc=0.8746, eval_time=3.1726
+2025-10-01 23:02:26,136 - INFO - Epoch 15: epoch=15, loss=0.1326, edge_loss=0.1285, motif_loss=0.0029, triad_loss=0.0013, alpha=0.0100, beta=0.0100, train_time=4.6414, epoch_time=7.8160, lr=0.0010, cache_hits=104434, cache_misses=7566, cache_hit_rate=0.9324, cache_cache_size=7566
+2025-10-01 23:02:30,904 - INFO - Epoch 16: epoch=16, loss=0.1307, edge_loss=0.1265, motif_loss=0.0029, triad_loss=0.0013, alpha=0.0100, beta=0.0100, train_time=4.7677, epoch_time=4.7677, lr=0.0010, cache_hits=111434, cache_misses=7566, cache_hit_rate=0.9364, cache_cache_size=7566
+2025-10-01 23:02:35,780 - INFO - Epoch 17: epoch=17, loss=0.1327, edge_loss=0.1285, motif_loss=0.0029, triad_loss=0.0013, alpha=0.0100, beta=0.0100, train_time=4.8759, epoch_time=4.8759, lr=0.0010, cache_hits=118434, cache_misses=7566, cache_hit_rate=0.9400, cache_cache_size=7566
+2025-10-01 23:02:40,469 - INFO - Epoch 18: epoch=18, loss=0.1299, edge_loss=0.1258, motif_loss=0.0029, triad_loss=0.0011, alpha=0.0100, beta=0.0100, train_time=4.6895, epoch_time=4.6895, lr=0.0010, cache_hits=125434, cache_misses=7566, cache_hit_rate=0.9431, cache_cache_size=7566
+2025-10-01 23:02:45,188 - INFO - Epoch 19: epoch=19, loss=0.1274, edge_loss=0.1233, motif_loss=0.0030, triad_loss=0.0011, alpha=0.0100, beta=0.0100, train_time=4.7029, epoch_time=4.7029, lr=0.0010, cache_hits=132434, cache_misses=7566, cache_hit_rate=0.9460, cache_cache_size=7566
+2025-10-01 23:02:45,446 - INFO - motif_energy_pos=0.046669, motif_energy_neg=0.777026
+2025-10-01 23:02:45,455 - INFO - dot_pos_mu=8.589±5.702, dot_neg_mu=-0.572±2.198
+2025-10-01 23:02:48,420 - INFO - Epoch 20: epoch=20, accuracy=0.8809, f1_micro=0.9340, f1_macro=0.6632, f1_weighted=0.8809, auc=0.8709, eval_time=3.2323
+2025-10-01 23:02:53,108 - INFO - Epoch 20: epoch=20, loss=0.1283, edge_loss=0.1242, motif_loss=0.0029, triad_loss=0.0012, alpha=0.0100, beta=0.0100, train_time=4.6876, epoch_time=7.9199, lr=0.0010, cache_hits=139434, cache_misses=7566, cache_hit_rate=0.9485, cache_cache_size=7566
+2025-10-01 23:02:57,914 - INFO - Epoch 21: epoch=21, loss=0.1253, edge_loss=0.1212, motif_loss=0.0029, triad_loss=0.0012, alpha=0.0100, beta=0.0100, train_time=4.8060, epoch_time=4.8060, lr=0.0010, cache_hits=146434, cache_misses=7566, cache_hit_rate=0.9509, cache_cache_size=7566
+2025-10-01 23:03:02,656 - INFO - Epoch 22: epoch=22, loss=0.1254, edge_loss=0.1213, motif_loss=0.0029, triad_loss=0.0013, alpha=0.0100, beta=0.0100, train_time=4.7426, epoch_time=4.7426, lr=0.0010, cache_hits=153434, cache_misses=7566, cache_hit_rate=0.9530, cache_cache_size=7566
+2025-10-01 23:03:07,448 - INFO - Epoch 23: epoch=23, loss=0.1244, edge_loss=0.1203, motif_loss=0.0029, triad_loss=0.0011, alpha=0.0100, beta=0.0100, train_time=4.7914, epoch_time=4.7914, lr=0.0010, cache_hits=160434, cache_misses=7566, cache_hit_rate=0.9550, cache_cache_size=7566
+2025-10-01 23:03:11,955 - INFO - Epoch 24: epoch=24, loss=0.1206, edge_loss=0.1167, motif_loss=0.0027, triad_loss=0.0011, alpha=0.0100, beta=0.0100, train_time=4.5074, epoch_time=4.5074, lr=0.0010, cache_hits=167434, cache_misses=7566, cache_hit_rate=0.9568, cache_cache_size=7566
+2025-10-01 23:03:12,208 - INFO - motif_energy_pos=0.067863, motif_energy_neg=0.556513
+2025-10-01 23:03:12,238 - INFO - dot_pos_mu=8.193±6.170, dot_neg_mu=-1.270±2.496
+2025-10-01 23:03:15,214 - INFO - Epoch 25: epoch=25, accuracy=0.8847, f1_micro=0.9361, f1_macro=0.6706, f1_weighted=0.8847, auc=0.8701, eval_time=3.2591
+2025-10-01 23:03:19,932 - INFO - Epoch 25: epoch=25, loss=0.1175, edge_loss=0.1138, motif_loss=0.0026, triad_loss=0.0011, alpha=0.0100, beta=0.0100, train_time=4.7180, epoch_time=7.9771, lr=0.0010, cache_hits=174434, cache_misses=7566, cache_hit_rate=0.9584, cache_cache_size=7566
+2025-10-01 23:03:24,662 - INFO - Epoch 26: epoch=26, loss=0.1134, edge_loss=0.1098, motif_loss=0.0025, triad_loss=0.0011, alpha=0.0100, beta=0.0100, train_time=4.7295, epoch_time=4.7295, lr=0.0010, cache_hits=181434, cache_misses=7566, cache_hit_rate=0.9600, cache_cache_size=7566
+2025-10-01 23:03:29,377 - INFO - Epoch 27: epoch=27, loss=0.1101, edge_loss=0.1065, motif_loss=0.0025, triad_loss=0.0012, alpha=0.0100, beta=0.0100, train_time=4.7155, epoch_time=4.7155, lr=0.0010, cache_hits=188434, cache_misses=7566, cache_hit_rate=0.9614, cache_cache_size=7566
+2025-10-01 23:03:34,137 - INFO - Epoch 28: epoch=28, loss=0.1047, edge_loss=0.1012, motif_loss=0.0024, triad_loss=0.0010, alpha=0.0100, beta=0.0100, train_time=4.7592, epoch_time=4.7592, lr=0.0010, cache_hits=195434, cache_misses=7566, cache_hit_rate=0.9627, cache_cache_size=7566
+2025-10-01 23:03:38,847 - INFO - Epoch 29: epoch=29, loss=0.1096, edge_loss=0.1059, motif_loss=0.0026, triad_loss=0.0010, alpha=0.0100, beta=0.0100, train_time=4.7108, epoch_time=4.7108, lr=0.0010, cache_hits=202434, cache_misses=7566, cache_hit_rate=0.9640, cache_cache_size=7566
+2025-10-01 23:03:39,112 - INFO - motif_energy_pos=0.036462, motif_energy_neg=0.593155
+2025-10-01 23:03:39,141 - INFO - dot_pos_mu=9.833±6.687, dot_neg_mu=-1.761±3.423
+2025-10-01 23:03:42,127 - INFO - Epoch 30: epoch=30, accuracy=0.8857, f1_micro=0.9367, f1_macro=0.6745, f1_weighted=0.8857, auc=0.8734, eval_time=3.2798
+2025-10-01 23:03:46,812 - INFO - Epoch 30: epoch=30, loss=0.1012, edge_loss=0.0980, motif_loss=0.0023, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=4.6848, epoch_time=7.9646, lr=0.0010, cache_hits=209434, cache_misses=7566, cache_hit_rate=0.9651, cache_cache_size=7566
+2025-10-01 23:03:51,328 - INFO - Epoch 31: epoch=31, loss=0.0987, edge_loss=0.0956, motif_loss=0.0022, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=4.5156, epoch_time=4.5156, lr=0.0010, cache_hits=216434, cache_misses=7566, cache_hit_rate=0.9662, cache_cache_size=7566
+2025-10-01 23:03:56,340 - INFO - Epoch 32: epoch=32, loss=0.0970, edge_loss=0.0936, motif_loss=0.0023, triad_loss=0.0011, alpha=0.0100, beta=0.0100, train_time=5.0122, epoch_time=5.0122, lr=0.0010, cache_hits=223434, cache_misses=7566, cache_hit_rate=0.9672, cache_cache_size=7566
+2025-10-01 23:04:01,395 - INFO - Epoch 33: epoch=33, loss=0.0978, edge_loss=0.0947, motif_loss=0.0021, triad_loss=0.0010, alpha=0.0100, beta=0.0100, train_time=5.0556, epoch_time=5.0556, lr=0.0010, cache_hits=230434, cache_misses=7566, cache_hit_rate=0.9682, cache_cache_size=7566
+2025-10-01 23:04:06,327 - INFO - Epoch 34: epoch=34, loss=0.0940, edge_loss=0.0909, motif_loss=0.0022, triad_loss=0.0010, alpha=0.0100, beta=0.0100, train_time=4.9314, epoch_time=4.9314, lr=0.0010, cache_hits=237434, cache_misses=7566, cache_hit_rate=0.9691, cache_cache_size=7566
+2025-10-01 23:04:06,574 - INFO - motif_energy_pos=0.035776, motif_energy_neg=0.527951
+2025-10-01 23:04:06,606 - INFO - dot_pos_mu=10.233±7.049, dot_neg_mu=-1.863±3.418
+2025-10-01 23:04:09,597 - INFO - Epoch 35: epoch=35, accuracy=0.8878, f1_micro=0.9379, f1_macro=0.6792, f1_weighted=0.8878, auc=0.8769, eval_time=3.2698
+2025-10-01 23:04:14,313 - INFO - Epoch 35: epoch=35, loss=0.0922, edge_loss=0.0893, motif_loss=0.0020, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=4.7141, epoch_time=7.9838, lr=0.0010, cache_hits=244434, cache_misses=7566, cache_hit_rate=0.9700, cache_cache_size=7566
+2025-10-01 23:04:18,990 - INFO - Epoch 36: epoch=36, loss=0.0934, edge_loss=0.0904, motif_loss=0.0020, triad_loss=0.0010, alpha=0.0100, beta=0.0100, train_time=4.6776, epoch_time=4.6776, lr=0.0010, cache_hits=251434, cache_misses=7566, cache_hit_rate=0.9708, cache_cache_size=7566
+2025-10-01 23:04:23,673 - INFO - Epoch 37: epoch=37, loss=0.0936, edge_loss=0.0907, motif_loss=0.0020, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=4.6827, epoch_time=4.6827, lr=0.0010, cache_hits=258434, cache_misses=7566, cache_hit_rate=0.9716, cache_cache_size=7566
+2025-10-01 23:04:28,299 - INFO - Epoch 38: epoch=38, loss=0.0920, edge_loss=0.0890, motif_loss=0.0021, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=4.6259, epoch_time=4.6259, lr=0.0010, cache_hits=265434, cache_misses=7566, cache_hit_rate=0.9723, cache_cache_size=7566
+2025-10-01 23:04:33,003 - INFO - Epoch 39: epoch=39, loss=0.0904, edge_loss=0.0876, motif_loss=0.0019, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=4.7040, epoch_time=4.7040, lr=0.0010, cache_hits=272434, cache_misses=7566, cache_hit_rate=0.9730, cache_cache_size=7566
+2025-10-01 23:04:33,227 - INFO - motif_energy_pos=0.024109, motif_energy_neg=0.568363
+2025-10-01 23:04:33,259 - INFO - dot_pos_mu=11.296±7.183, dot_neg_mu=-1.944±3.813
+2025-10-01 23:04:36,177 - INFO - Epoch 40: epoch=40, accuracy=0.8861, f1_micro=0.9368, f1_macro=0.6787, f1_weighted=0.8861, auc=0.8805, eval_time=3.1742
+2025-10-01 23:04:40,864 - INFO - Epoch 40: epoch=40, loss=0.0895, edge_loss=0.0868, motif_loss=0.0019, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=4.6868, epoch_time=7.8610, lr=0.0010, cache_hits=279434, cache_misses=7566, cache_hit_rate=0.9736, cache_cache_size=7566
+2025-10-01 23:04:45,558 - INFO - Epoch 41: epoch=41, loss=0.0858, edge_loss=0.0832, motif_loss=0.0017, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=4.6918, epoch_time=4.6918, lr=0.0010, cache_hits=286434, cache_misses=7566, cache_hit_rate=0.9743, cache_cache_size=7566
+2025-10-01 23:04:50,556 - INFO - Epoch 42: epoch=42, loss=0.0841, edge_loss=0.0815, motif_loss=0.0018, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=4.9989, epoch_time=4.9989, lr=0.0010, cache_hits=293434, cache_misses=7566, cache_hit_rate=0.9749, cache_cache_size=7566
+2025-10-01 23:04:55,652 - INFO - Epoch 43: epoch=43, loss=0.0839, edge_loss=0.0813, motif_loss=0.0018, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=5.0795, epoch_time=5.0795, lr=0.0010, cache_hits=300434, cache_misses=7566, cache_hit_rate=0.9754, cache_cache_size=7566
+2025-10-01 23:05:01,375 - INFO - Epoch 44: epoch=44, loss=0.0845, edge_loss=0.0820, motif_loss=0.0017, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=5.7236, epoch_time=5.7236, lr=0.0010, cache_hits=307434, cache_misses=7566, cache_hit_rate=0.9760, cache_cache_size=7566
+2025-10-01 23:05:01,672 - INFO - motif_energy_pos=0.039036, motif_energy_neg=0.381868
+2025-10-01 23:05:01,696 - INFO - dot_pos_mu=11.049±7.609, dot_neg_mu=-2.947±4.126
+2025-10-01 23:05:04,794 - INFO - Epoch 45: epoch=45, accuracy=0.8871, f1_micro=0.9374, f1_macro=0.6819, f1_weighted=0.8871, auc=0.8817, eval_time=3.4186
+2025-10-01 23:05:10,306 - INFO - Epoch 45: epoch=45, loss=0.0802, edge_loss=0.0776, motif_loss=0.0017, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=5.5025, epoch_time=8.9305, lr=0.0010, cache_hits=314434, cache_misses=7566, cache_hit_rate=0.9765, cache_cache_size=7566
+2025-10-01 23:05:15,935 - INFO - Epoch 46: epoch=46, loss=0.0813, edge_loss=0.0787, motif_loss=0.0017, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=5.6271, epoch_time=5.6271, lr=0.0010, cache_hits=321434, cache_misses=7566, cache_hit_rate=0.9770, cache_cache_size=7566
+2025-10-01 23:05:21,407 - INFO - Epoch 47: epoch=47, loss=0.0832, edge_loss=0.0809, motif_loss=0.0016, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=5.4702, epoch_time=5.4702, lr=0.0010, cache_hits=328434, cache_misses=7566, cache_hit_rate=0.9775, cache_cache_size=7566
+2025-10-01 23:05:27,093 - INFO - Epoch 48: epoch=48, loss=0.0830, edge_loss=0.0804, motif_loss=0.0016, triad_loss=0.0009, alpha=0.0100, beta=0.0100, train_time=5.6857, epoch_time=5.6857, lr=0.0010, cache_hits=335434, cache_misses=7566, cache_hit_rate=0.9779, cache_cache_size=7566
+2025-10-01 23:05:32,742 - INFO - Epoch 49: epoch=49, loss=0.0852, edge_loss=0.0826, motif_loss=0.0018, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=5.6489, epoch_time=5.6489, lr=0.0010, cache_hits=342434, cache_misses=7566, cache_hit_rate=0.9784, cache_cache_size=7566
+2025-10-01 23:05:33,040 - INFO - motif_energy_pos=0.038853, motif_energy_neg=0.372360
+2025-10-01 23:05:33,056 - INFO - dot_pos_mu=11.510±7.957, dot_neg_mu=-2.731±3.841
+2025-10-01 23:05:36,343 - INFO - Epoch 50: epoch=50, accuracy=0.8876, f1_micro=0.9376, f1_macro=0.6843, f1_weighted=0.8876, auc=0.8834, eval_time=3.6009
+2025-10-01 23:05:42,112 - INFO - Epoch 50: epoch=50, loss=0.0830, edge_loss=0.0805, motif_loss=0.0017, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=5.7529, epoch_time=9.3698, lr=0.0010, cache_hits=349434, cache_misses=7566, cache_hit_rate=0.9788, cache_cache_size=7566
+2025-10-01 23:05:48,045 - INFO - Epoch 51: epoch=51, loss=0.0798, edge_loss=0.0774, motif_loss=0.0016, triad_loss=0.0008, alpha=0.0100, beta=0.0100, train_time=5.9340, epoch_time=5.9340, lr=0.0010, cache_hits=356434, cache_misses=7566, cache_hit_rate=0.9792, cache_cache_size=7566
+2025-10-01 23:05:48,045 - INFO - ================================================================================
+2025-10-01 23:05:48,045 - INFO - Training completed!
+2025-10-01 23:05:48,045 - INFO - Best AUC: 0.8834 at epoch 50
+2025-10-01 23:05:48,045 - INFO - Total training time: 290.55s
+2025-10-01 23:05:48,045 - INFO - Cache statistics: {'hits': 356434, 'misses': 7566, 'hit_rate': 0.9792142857142857, 'cache_size': 7566}
+2025-10-01 23:05:48,658 - WARNING - Could not plot metrics: x and y must have same first dimension, but have shapes (63,) and (52,)
+2025-10-01 23:05:48,658 - INFO - ================================================================================

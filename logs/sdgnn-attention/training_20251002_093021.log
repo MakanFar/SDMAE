@@ -1,0 +1,35 @@
+2025-10-02 09:30:21,779 - INFO - ================================================================================
+2025-10-02 09:30:21,779 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-02 09:30:21,779 - INFO - ================================================================================
+2025-10-02 09:30:21,779 - INFO - NUM_NODE: 3783
+2025-10-02 09:30:21,779 - INFO - WEIGHT_DECAY: 0.001
+2025-10-02 09:30:21,779 - INFO - NODE_FEAT_SIZE: 20
+2025-10-02 09:30:21,779 - INFO - EMBEDDING_SIZE: 20
+2025-10-02 09:30:21,779 - INFO - LEARNING_RATE: 0.0001
+2025-10-02 09:30:21,779 - INFO - BATCH_SIZE: 500
+2025-10-02 09:30:21,779 - INFO - EPOCHS: 50
+2025-10-02 09:30:21,779 - INFO - DROPOUT: 0.0
+2025-10-02 09:30:21,779 - INFO - AGGREGATOR: attention
+2025-10-02 09:30:21,779 - INFO - ALPHA: 0.001
+2025-10-02 09:30:21,779 - INFO - BETA: 0.001
+2025-10-02 09:30:21,779 - INFO - DEVICE: cpu
+2025-10-02 09:30:21,779 - INFO - ================================================================================
+2025-10-02 09:30:21,779 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-02 09:30:21,779 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 50, 'lr': 0.0001, 'weight_decay': 0.001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'attention', 'alpha': 0.001, 'beta': 0.001, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 15, 'warmup_epochs': 5, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 1000, 'triad_prob': 0.8, 'motif_scale': 1.0, 'motif_loss_type': 'logistic'}
+2025-10-02 09:30:21,813 - INFO - Data loaded in 0.03s
+2025-10-02 09:30:21,813 - INFO - Building motif structures...
+2025-10-02 09:30:22,233 - INFO - Sampled 101500 triads
+2025-10-02 09:30:23,454 - INFO - [motif:out_in_pos] nnz=9179, mean=0.973225
+2025-10-02 09:30:23,470 - INFO - [motif:out_in_neg] nnz=846, mean=0.986251
+2025-10-02 09:30:23,470 - INFO - [motif:out_in_pos] shape=(3786, 3786), nnz=9179, density=0.000640, range=(1.408427829757165e-07, 11.439601133494048)
+2025-10-02 09:30:23,471 - INFO - [motif:out_in_neg] shape=(3786, 3786), nnz=846, density=0.000059, range=(8.331116810581753e-07, 6.417015232377665)
+2025-10-02 09:30:23,471 - INFO - [motif:co_out] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-02 09:30:23,471 - INFO - [motif:co_in] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-02 09:30:23,471 - INFO - Triads indexed for 3154 unique nodes
+2025-10-02 09:30:23,471 - INFO - Motif structures built in 1.66s
+2025-10-02 09:30:24,471 - INFO - Total initialization time: 2.69s
+2025-10-02 09:30:24,471 - INFO - Starting training...
+2025-10-02 09:30:24,731 - INFO - motif_energy_pos=0.011711, motif_energy_neg=4.453933
+2025-10-02 09:30:24,755 - INFO - dot_pos_mu=4.445±0.167, dot_neg_mu=4.440±0.169
+2025-10-02 09:30:28,130 - INFO - Epoch 0: epoch=0, accuracy=0.5909, f1_micro=0.7314, f1_macro=0.4368, f1_weighted=0.5909, auc=0.6017, eval_time=3.6596
+2025-10-02 09:30:30,791 - WARNING - Training interrupted by user

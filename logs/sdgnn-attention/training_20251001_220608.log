@@ -1,0 +1,77 @@
+2025-10-01 22:06:08,824 - INFO - ================================================================================
+2025-10-01 22:06:08,824 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-01 22:06:08,824 - INFO - ================================================================================
+2025-10-01 22:06:08,824 - INFO - NUM_NODE: 3783
+2025-10-01 22:06:08,824 - INFO - WEIGHT_DECAY: 0.001
+2025-10-01 22:06:08,824 - INFO - NODE_FEAT_SIZE: 20
+2025-10-01 22:06:08,824 - INFO - EMBEDDING_SIZE: 20
+2025-10-01 22:06:08,824 - INFO - LEARNING_RATE: 0.001
+2025-10-01 22:06:08,824 - INFO - BATCH_SIZE: 500
+2025-10-01 22:06:08,824 - INFO - EPOCHS: 100
+2025-10-01 22:06:08,824 - INFO - DROPOUT: 0.0
+2025-10-01 22:06:08,824 - INFO - AGGREGATOR: attention
+2025-10-01 22:06:08,824 - INFO - ALPHA: 1.0
+2025-10-01 22:06:08,824 - INFO - BETA: 1.0
+2025-10-01 22:06:08,824 - INFO - DEVICE: cpu
+2025-10-01 22:06:08,824 - INFO - ================================================================================
+2025-10-01 22:06:08,824 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-01 22:06:08,824 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 100, 'lr': 0.001, 'weight_decay': 0.001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'attention', 'alpha': 1.0, 'beta': 1.0, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 15, 'warmup_epochs': 10, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 500, 'triad_prob': 0.01, 'motif_scale': 1.0, 'motif_loss_type': 'l2'}
+2025-10-01 22:06:08,847 - INFO - Data loaded in 0.02s
+2025-10-01 22:06:08,847 - INFO - Building motif structures...
+2025-10-01 22:06:08,948 - INFO - Sampled 391 triads
+2025-10-01 22:06:08,956 - INFO - [motif:out_in_pos] nnz=299, mean=0.824553
+2025-10-01 22:06:08,957 - INFO - [motif:out_in_neg] nnz=19, mean=0.972449
+2025-10-01 22:06:08,958 - INFO - [motif:out_in_pos] shape=(3786, 3786), nnz=299, density=0.000021, range=(6.034305623303032e-06, 4.732075594628242)
+2025-10-01 22:06:08,958 - INFO - [motif:out_in_neg] shape=(3786, 3786), nnz=19, density=0.000001, range=(0.0016422439485129388, 4.390995685424677)
+2025-10-01 22:06:08,958 - INFO - [motif:co_out] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-01 22:06:08,958 - INFO - [motif:co_in] shape=(3786, 3786), nnz=0, density=0.000000, range=(0.0, 0.0)
+2025-10-01 22:06:08,958 - INFO - Triads indexed for 389 unique nodes
+2025-10-01 22:06:08,958 - INFO - Motif structures built in 0.11s
+2025-10-01 22:06:10,020 - INFO - Total initialization time: 1.20s
+2025-10-01 22:06:10,020 - INFO - Starting training...
+2025-10-01 22:06:10,284 - INFO - motif_energy_pos=0.011487, motif_energy_neg=4.529628
+2025-10-01 22:06:10,308 - INFO - dot_pos_mu=4.445±0.167, dot_neg_mu=4.440±0.169
+2025-10-01 22:06:13,841 - INFO - Epoch 0: epoch=0, accuracy=0.5909, f1_micro=0.7314, f1_macro=0.4368, f1_weighted=0.5909, auc=0.6017, eval_time=3.8211
+2025-10-01 22:06:17,246 - INFO - Epoch 0: epoch=0, loss=0.3580, edge_loss=0.3580, motif_loss=0.0000, triad_loss=0.0000, alpha=0.0000, beta=0.0000, train_time=3.3885, epoch_time=7.2266, lr=0.0010, cache_hits=0, cache_misses=7000, cache_hit_rate=0.0000, cache_cache_size=7000
+2025-10-01 22:06:20,751 - INFO - Epoch 1: epoch=1, loss=0.3592, edge_loss=0.3177, motif_loss=0.0322, triad_loss=0.0093, alpha=0.0245, beta=0.0245, train_time=3.5051, epoch_time=3.5051, lr=0.0010, cache_hits=6476, cache_misses=7524, cache_hit_rate=0.4626, cache_cache_size=7524
+2025-10-01 22:06:24,273 - INFO - Epoch 2: epoch=2, loss=0.4202, edge_loss=0.3065, motif_loss=0.0816, triad_loss=0.0321, alpha=0.0955, beta=0.0955, train_time=3.5214, epoch_time=3.5214, lr=0.0010, cache_hits=13434, cache_misses=7566, cache_hit_rate=0.6397, cache_cache_size=7566
+2025-10-01 22:06:27,706 - INFO - Epoch 3: epoch=3, loss=0.4859, edge_loss=0.2825, motif_loss=0.1526, triad_loss=0.0508, alpha=0.2061, beta=0.2061, train_time=3.4330, epoch_time=3.4330, lr=0.0010, cache_hits=20434, cache_misses=7566, cache_hit_rate=0.7298, cache_cache_size=7566
+2025-10-01 22:06:31,220 - INFO - Epoch 4: epoch=4, loss=0.5615, edge_loss=0.2550, motif_loss=0.2236, triad_loss=0.0829, alpha=0.3455, beta=0.3455, train_time=3.5141, epoch_time=3.5141, lr=0.0010, cache_hits=27434, cache_misses=7566, cache_hit_rate=0.7838, cache_cache_size=7566
+2025-10-01 22:06:31,455 - INFO - motif_energy_pos=0.127257, motif_energy_neg=0.930639
+2025-10-01 22:06:31,479 - INFO - dot_pos_mu=2.627±0.924, dot_neg_mu=1.119±0.550
+2025-10-01 22:06:34,429 - INFO - Epoch 5: epoch=5, accuracy=0.8415, f1_micro=0.9099, f1_macro=0.6252, f1_weighted=0.8415, auc=0.8661, eval_time=3.2093
+2025-10-01 22:06:37,998 - INFO - Epoch 5: epoch=5, loss=0.5848, edge_loss=0.2159, motif_loss=0.2402, triad_loss=0.1286, alpha=0.5000, beta=0.5000, train_time=3.5682, epoch_time=6.7776, lr=0.0010, cache_hits=34434, cache_misses=7566, cache_hit_rate=0.8199, cache_cache_size=7566
+2025-10-01 22:06:41,612 - INFO - Epoch 6: epoch=6, loss=0.5108, edge_loss=0.1999, motif_loss=0.2249, triad_loss=0.0860, alpha=0.6545, beta=0.6545, train_time=3.6136, epoch_time=3.6136, lr=0.0010, cache_hits=41434, cache_misses=7566, cache_hit_rate=0.8456, cache_cache_size=7566
+2025-10-01 22:06:45,312 - INFO - Epoch 7: epoch=7, loss=0.4707, edge_loss=0.1830, motif_loss=0.1758, triad_loss=0.1119, alpha=0.7939, beta=0.7939, train_time=3.7000, epoch_time=3.7000, lr=0.0010, cache_hits=48434, cache_misses=7566, cache_hit_rate=0.8649, cache_cache_size=7566
+2025-10-01 22:06:49,142 - INFO - Epoch 8: epoch=8, loss=0.3973, edge_loss=0.1795, motif_loss=0.1341, triad_loss=0.0838, alpha=0.9045, beta=0.9045, train_time=3.8303, epoch_time=3.8303, lr=0.0010, cache_hits=55434, cache_misses=7566, cache_hit_rate=0.8799, cache_cache_size=7566
+2025-10-01 22:06:52,605 - INFO - Epoch 9: epoch=9, loss=0.5041, edge_loss=0.1817, motif_loss=0.1566, triad_loss=0.1658, alpha=0.9755, beta=0.9755, train_time=3.4625, epoch_time=3.4625, lr=0.0010, cache_hits=62434, cache_misses=7566, cache_hit_rate=0.8919, cache_cache_size=7566
+2025-10-01 22:06:52,852 - INFO - motif_energy_pos=0.044405, motif_energy_neg=0.088457
+2025-10-01 22:06:52,879 - INFO - dot_pos_mu=5.188±3.367, dot_neg_mu=-0.662±2.220
+2025-10-01 22:06:55,900 - INFO - Epoch 10: epoch=10, accuracy=0.8710, f1_micro=0.9279, f1_macro=0.6598, f1_weighted=0.8710, auc=0.8754, eval_time=3.2943
+2025-10-01 22:06:59,523 - INFO - Epoch 10: epoch=10, loss=0.3818, edge_loss=0.1782, motif_loss=0.0646, triad_loss=0.1391, alpha=1.0000, beta=1.0000, train_time=3.6180, epoch_time=6.9182, lr=0.0010, cache_hits=69434, cache_misses=7566, cache_hit_rate=0.9017, cache_cache_size=7566
+2025-10-01 22:07:02,962 - INFO - Epoch 11: epoch=11, loss=0.3197, edge_loss=0.1720, motif_loss=0.0362, triad_loss=0.1115, alpha=1.0000, beta=1.0000, train_time=3.4387, epoch_time=3.4387, lr=0.0010, cache_hits=76434, cache_misses=7566, cache_hit_rate=0.9099, cache_cache_size=7566
+2025-10-01 22:07:06,634 - INFO - Epoch 12: epoch=12, loss=0.3053, edge_loss=0.1637, motif_loss=0.0267, triad_loss=0.1149, alpha=1.0000, beta=1.0000, train_time=3.6717, epoch_time=3.6717, lr=0.0010, cache_hits=83434, cache_misses=7566, cache_hit_rate=0.9169, cache_cache_size=7566
+2025-10-01 22:07:10,222 - INFO - Epoch 13: epoch=13, loss=0.2671, edge_loss=0.1592, motif_loss=0.0224, triad_loss=0.0855, alpha=1.0000, beta=1.0000, train_time=3.5879, epoch_time=3.5879, lr=0.0010, cache_hits=90434, cache_misses=7566, cache_hit_rate=0.9228, cache_cache_size=7566
+2025-10-01 22:07:13,937 - INFO - Epoch 14: epoch=14, loss=0.2859, edge_loss=0.1564, motif_loss=0.0220, triad_loss=0.1075, alpha=1.0000, beta=1.0000, train_time=3.7157, epoch_time=3.7157, lr=0.0010, cache_hits=97434, cache_misses=7566, cache_hit_rate=0.9279, cache_cache_size=7566
+2025-10-01 22:07:14,210 - INFO - motif_energy_pos=0.018081, motif_energy_neg=0.057596
+2025-10-01 22:07:14,235 - INFO - dot_pos_mu=6.204±3.845, dot_neg_mu=-0.445±2.261
+2025-10-01 22:07:17,204 - INFO - Epoch 15: epoch=15, accuracy=0.8762, f1_micro=0.9310, f1_macro=0.6633, f1_weighted=0.8762, auc=0.8789, eval_time=3.2666
+2025-10-01 22:07:21,124 - INFO - Epoch 15: epoch=15, loss=0.2604, edge_loss=0.1543, motif_loss=0.0172, triad_loss=0.0889, alpha=1.0000, beta=1.0000, train_time=3.9078, epoch_time=7.1864, lr=0.0010, cache_hits=104434, cache_misses=7566, cache_hit_rate=0.9324, cache_cache_size=7566
+2025-10-01 22:07:25,293 - INFO - Epoch 16: epoch=16, loss=0.2854, edge_loss=0.1546, motif_loss=0.0203, triad_loss=0.1105, alpha=1.0000, beta=1.0000, train_time=4.1692, epoch_time=4.1692, lr=0.0010, cache_hits=111434, cache_misses=7566, cache_hit_rate=0.9364, cache_cache_size=7566
+2025-10-01 22:07:29,496 - INFO - Epoch 17: epoch=17, loss=0.2627, edge_loss=0.1490, motif_loss=0.0193, triad_loss=0.0944, alpha=1.0000, beta=1.0000, train_time=4.2036, epoch_time=4.2036, lr=0.0010, cache_hits=118434, cache_misses=7566, cache_hit_rate=0.9400, cache_cache_size=7566
+2025-10-01 22:07:33,479 - INFO - Epoch 18: epoch=18, loss=0.2317, edge_loss=0.1431, motif_loss=0.0154, triad_loss=0.0732, alpha=1.0000, beta=1.0000, train_time=3.9820, epoch_time=3.9820, lr=0.0010, cache_hits=125434, cache_misses=7566, cache_hit_rate=0.9431, cache_cache_size=7566
+2025-10-01 22:07:37,419 - INFO - Epoch 19: epoch=19, loss=0.2014, edge_loss=0.1356, motif_loss=0.0110, triad_loss=0.0548, alpha=1.0000, beta=1.0000, train_time=3.9398, epoch_time=3.9398, lr=0.0010, cache_hits=132434, cache_misses=7566, cache_hit_rate=0.9460, cache_cache_size=7566
+2025-10-01 22:07:37,694 - INFO - motif_energy_pos=0.016487, motif_energy_neg=0.014880
+2025-10-01 22:07:37,720 - INFO - dot_pos_mu=7.566±5.318, dot_neg_mu=-0.771±2.685
+2025-10-01 22:07:40,830 - INFO - Epoch 20: epoch=20, accuracy=0.8743, f1_micro=0.9300, f1_macro=0.6592, f1_weighted=0.8743, auc=0.8769, eval_time=3.4112
+2025-10-01 22:07:44,785 - INFO - Epoch 20: epoch=20, loss=0.1857, edge_loss=0.1382, motif_loss=0.0120, triad_loss=0.0355, alpha=1.0000, beta=1.0000, train_time=3.9547, epoch_time=7.3659, lr=0.0010, cache_hits=139434, cache_misses=7566, cache_hit_rate=0.9485, cache_cache_size=7566
+2025-10-01 22:07:48,960 - INFO - Epoch 21: epoch=21, loss=0.1726, edge_loss=0.1335, motif_loss=0.0066, triad_loss=0.0324, alpha=1.0000, beta=1.0000, train_time=4.1750, epoch_time=4.1750, lr=0.0010, cache_hits=146434, cache_misses=7566, cache_hit_rate=0.9509, cache_cache_size=7566
+2025-10-01 22:07:52,997 - INFO - Epoch 22: epoch=22, loss=0.1713, edge_loss=0.1288, motif_loss=0.0077, triad_loss=0.0348, alpha=1.0000, beta=1.0000, train_time=4.0371, epoch_time=4.0371, lr=0.0010, cache_hits=153434, cache_misses=7566, cache_hit_rate=0.9530, cache_cache_size=7566
+2025-10-01 22:07:56,665 - INFO - Epoch 23: epoch=23, loss=0.1549, edge_loss=0.1243, motif_loss=0.0068, triad_loss=0.0238, alpha=1.0000, beta=1.0000, train_time=3.6679, epoch_time=3.6679, lr=0.0010, cache_hits=160434, cache_misses=7566, cache_hit_rate=0.9550, cache_cache_size=7566
+2025-10-01 22:08:00,395 - INFO - Epoch 24: epoch=24, loss=0.1578, edge_loss=0.1236, motif_loss=0.0057, triad_loss=0.0284, alpha=1.0000, beta=1.0000, train_time=3.7307, epoch_time=3.7307, lr=0.0010, cache_hits=167434, cache_misses=7566, cache_hit_rate=0.9568, cache_cache_size=7566
+2025-10-01 22:08:00,646 - INFO - motif_energy_pos=0.005820, motif_energy_neg=0.007333
+2025-10-01 22:08:00,666 - INFO - dot_pos_mu=8.537±5.935, dot_neg_mu=-1.475±3.551
+2025-10-01 22:08:03,666 - INFO - Epoch 25: epoch=25, accuracy=0.8762, f1_micro=0.9310, f1_macro=0.6633, f1_weighted=0.8762, auc=0.8726, eval_time=3.2700
+2025-10-01 22:08:07,409 - INFO - Epoch 25: epoch=25, loss=0.1584, edge_loss=0.1201, motif_loss=0.0050, triad_loss=0.0333, alpha=1.0000, beta=1.0000, train_time=3.7430, epoch_time=7.0130, lr=0.0010, cache_hits=174434, cache_misses=7566, cache_hit_rate=0.9584, cache_cache_size=7566
+2025-10-01 22:08:11,058 - INFO - Epoch 26: epoch=26, loss=0.1590, edge_loss=0.1179, motif_loss=0.0079, triad_loss=0.0331, alpha=1.0000, beta=1.0000, train_time=3.6489, epoch_time=3.6489, lr=0.0010, cache_hits=181434, cache_misses=7566, cache_hit_rate=0.9600, cache_cache_size=7566
+2025-10-01 22:08:12,569 - WARNING - Training interrupted by user

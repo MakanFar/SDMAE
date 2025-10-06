@@ -1,0 +1,81 @@
+2025-10-06 10:55:55,315 - INFO - ================================================================================
+2025-10-06 10:55:55,315 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-06 10:55:55,330 - INFO - ================================================================================
+2025-10-06 10:55:55,330 - INFO - NUM_NODE: 3783
+2025-10-06 10:55:55,330 - INFO - WEIGHT_DECAY: 0.0001
+2025-10-06 10:55:55,330 - INFO - NODE_FEAT_SIZE: 20
+2025-10-06 10:55:55,330 - INFO - EMBEDDING_SIZE: 20
+2025-10-06 10:55:55,330 - INFO - LEARNING_RATE: 0.001
+2025-10-06 10:55:55,330 - INFO - BATCH_SIZE: 500
+2025-10-06 10:55:55,332 - INFO - EPOCHS: 40
+2025-10-06 10:55:55,332 - INFO - DROPOUT: 0.0
+2025-10-06 10:55:55,332 - INFO - AGGREGATOR: mean
+2025-10-06 10:55:55,332 - INFO - ALPHA: 0.05
+2025-10-06 10:55:55,332 - INFO - BETA: 0.005
+2025-10-06 10:55:55,332 - INFO - DEVICE: cpu
+2025-10-06 10:55:55,332 - INFO - ================================================================================
+2025-10-06 10:55:55,333 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-06 10:55:55,333 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 40, 'lr': 0.001, 'weight_decay': 0.0001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'mean', 'alpha': 0.05, 'beta': 0.005, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 12, 'warmup_epochs': 5, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 500, 'triad_prob': 0.6, 'motif_scale': 1.0, 'motif_loss_type': 'logistic', 'motif_gamma': 0.15, 'use_motif_channels': True}
+2025-10-06 10:55:55,361 - INFO - Data loaded in 0.03s
+2025-10-06 10:55:55,361 - INFO - Building motif structures...
+2025-10-06 10:55:55,498 - INFO - Sampled 26601 triads
+2025-10-06 10:55:56,363 - INFO - [motif:out_in_pos] shape=(3786, 3786), nnz=5155, density=0.000360, range=(0.00036724201248487977, 0.9999999998076923)
+2025-10-06 10:55:56,363 - INFO - [motif:out_in_neg] shape=(3786, 3786), nnz=454, density=0.000032, range=(0.003496503496381241, 0.999999999909091)
+2025-10-06 10:55:56,363 - INFO - [motif:co_out] shape=(3786, 3786), nnz=38406, density=0.002679, range=(3.131164480069158e-05, 0.9999999996153845)
+2025-10-06 10:55:56,364 - INFO - [motif:co_in] shape=(3786, 3786), nnz=42270, density=0.002949, range=(3.249601923763283e-05, 0.9999999991666666)
+2025-10-06 10:55:56,364 - INFO - Triads indexed for 2475 unique nodes
+2025-10-06 10:55:56,364 - INFO - Motif structures built in 1.00s
+2025-10-06 10:55:56,381 - INFO - Motif channels added with gamma=0.15 (total channels=6)
+2025-10-06 10:55:57,438 - INFO - Total initialization time: 2.11s
+2025-10-06 10:55:57,438 - INFO - Starting training...
+2025-10-06 10:55:57,454 - ERROR - Training failed with error: list index out of range
+2025-10-06 10:55:57,457 - ERROR - Traceback (most recent call last):
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1311, in main
+    run(dataset=dataset, k=1)
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1106, in run
+    embed = model.forward(list(range(i, min(i + BATCH_SIZE, NUM_NODE))))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 697, in forward
+    embeds = self.enc(nodes)
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 563, in forward
+    nf = agg(nodes, adj, ch_idx)
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 662, in forward
+    new_embeddings = self.out_linear_layer(self.features(n2))
+                                           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1065, in <lambda>
+    aggs2_all = [aggregator(lambda n: enc1(n), EMBEDDING_SIZE1, EMBEDDING_SIZE1, num_nodes) for _ in all_adj_lists]
+                                      ^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 563, in forward
+    nf = agg(nodes, adj, ch_idx)
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 666, in forward
+    torch.FloatTensor([mask[ind]]).to(DEVICES),
+                       ~~~~^^^^^
+IndexError: list index out of range
+

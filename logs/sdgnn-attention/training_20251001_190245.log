@@ -1,0 +1,54 @@
+2025-10-01 19:02:45,343 - INFO - ================================================================================
+2025-10-01 19:02:45,343 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-01 19:02:45,343 - INFO - ================================================================================
+2025-10-01 19:02:45,343 - INFO - NUM_NODE: 3783
+2025-10-01 19:02:45,343 - INFO - WEIGHT_DECAY: 0.001
+2025-10-01 19:02:45,343 - INFO - NODE_FEAT_SIZE: 20
+2025-10-01 19:02:45,343 - INFO - EMBEDDING_SIZE: 20
+2025-10-01 19:02:45,343 - INFO - LEARNING_RATE: 0.001
+2025-10-01 19:02:45,343 - INFO - BATCH_SIZE: 500
+2025-10-01 19:02:45,343 - INFO - EPOCHS: 100
+2025-10-01 19:02:45,343 - INFO - DROPOUT: 0.0
+2025-10-01 19:02:45,343 - INFO - AGGREGATOR: attention
+2025-10-01 19:02:45,343 - INFO - ALPHA: 0.01
+2025-10-01 19:02:45,343 - INFO - BETA: 0.7
+2025-10-01 19:02:45,343 - INFO - DEVICE: cpu
+2025-10-01 19:02:45,343 - INFO - ================================================================================
+2025-10-01 19:02:45,343 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-01 19:02:45,343 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 100, 'lr': 0.001, 'weight_decay': 0.001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'attention', 'alpha': 0.01, 'beta': 0.7, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 15, 'warmup_epochs': 3, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 500, 'triad_prob': 0.6, 'motif_scale': 1.0, 'motif_loss_type': 'l2'}
+2025-10-01 19:02:45,374 - INFO - Data loaded in 0.03s
+2025-10-01 19:02:45,374 - INFO - Building motif structures...
+2025-10-01 19:02:45,481 - INFO - Sampled 26601 triads
+2025-10-01 19:02:45,656 - INFO - Motif adjacency shape: (3783, 3783)
+2025-10-01 19:02:45,656 - INFO - Motif adjacency nnz (non-zeros): 58932
+2025-10-01 19:02:45,656 - INFO - Motif adjacency density: 0.004118
+2025-10-01 19:02:45,656 - INFO - Motif adjacency value range: [1.0000, 228.0000]
+2025-10-01 19:02:45,656 - INFO - After normalization - nnz: 58932
+2025-10-01 19:02:45,656 - INFO - After normalization - value range: [0.011977, 31.025095]
+2025-10-01 19:02:45,656 - INFO - After normalization - mean value: 1.000000
+2025-10-01 19:02:45,656 - INFO - After normalization - median value: 0.442089
+2025-10-01 19:02:45,656 - INFO - COO arrays - rows: 58932, cols: 58932, vals: 58932
+2025-10-01 19:02:45,656 - INFO - Node ID range in motif matrix: [11, 3762]
+2025-10-01 19:02:45,656 - INFO - Training graph has nodes: 0 to 3782
+2025-10-01 19:02:45,675 - INFO - Training nodes in motif matrix: 2475 / 3783 (65.4%)
+2025-10-01 19:02:45,682 - INFO - Triads indexed for 2475 unique nodes
+2025-10-01 19:02:45,683 - INFO - Motif structures built in 0.31s
+2025-10-01 19:02:45,684 - INFO - Computing edge weights...
+2025-10-01 19:02:46,188 - INFO - Edge weights computed in 0.50s
+2025-10-01 19:02:47,223 - INFO - Total initialization time: 1.88s
+2025-10-01 19:02:47,224 - INFO - Starting training...
+2025-10-01 19:02:47,469 - INFO - pull_energy=0.027355
+2025-10-01 19:02:47,499 - INFO - dot_pos_mu=4.445±0.167, dot_neg_mu=4.440±0.169
+2025-10-01 19:02:50,836 - INFO - Epoch 0: epoch=0, accuracy=0.5909, f1_micro=0.7314, f1_macro=0.4368, f1_weighted=0.5909, auc=0.6017, eval_time=3.6123
+2025-10-01 19:02:50,936 - ERROR - Training failed with error: signed_bce_loss() got an unexpected keyword argument 'sign'
+2025-10-01 19:02:50,937 - ERROR - Traceback (most recent call last):
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1193, in main
+    run(dataset=dataset, k=K)
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1094, in run
+    loss, loss_dict = model.criterion_motif(
+                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 596, in criterion_motif
+    edge_losses.append(signed_bce_loss(z_u, Z[idx], sign=1.0))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: signed_bce_loss() got an unexpected keyword argument 'sign'
+

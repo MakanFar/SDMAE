@@ -1,0 +1,93 @@
+2025-10-01 12:01:22,926 - INFO - ================================================================================
+2025-10-01 12:01:22,926 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-01 12:01:22,926 - INFO - ================================================================================
+2025-10-01 12:01:22,927 - INFO - NUM_NODE: 3783
+2025-10-01 12:01:22,927 - INFO - WEIGHT_DECAY: 0.001
+2025-10-01 12:01:22,927 - INFO - NODE_FEAT_SIZE: 20
+2025-10-01 12:01:22,927 - INFO - EMBEDDING_SIZE: 20
+2025-10-01 12:01:22,927 - INFO - LEARNING_RATE: 0.001
+2025-10-01 12:01:22,927 - INFO - BATCH_SIZE: 500
+2025-10-01 12:01:22,927 - INFO - EPOCHS: 100
+2025-10-01 12:01:22,927 - INFO - DROPOUT: 0.0
+2025-10-01 12:01:22,927 - INFO - AGGREGATOR: attention
+2025-10-01 12:01:22,927 - INFO - ALPHA: 0.01
+2025-10-01 12:01:22,927 - INFO - BETA: 0.7
+2025-10-01 12:01:22,927 - INFO - DEVICE: cuda
+2025-10-01 12:01:22,927 - INFO - ================================================================================
+2025-10-01 12:01:22,928 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-01 12:01:22,928 - INFO - Configuration: {'devices': 'cuda', 'seed': 13, 'epochs': 100, 'lr': 0.001, 'weight_decay': 0.001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '1', 'agg': 'attention', 'alpha': 0.01, 'beta': 0.7, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 5, 'patience': 15, 'warmup_epochs': 3, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 500, 'triad_prob': 0.6, 'motif_scale': 1.0, 'motif_loss_type': 'cosine'}
+2025-10-01 12:01:22,956 - INFO - Data loaded in 0.03s
+2025-10-01 12:01:22,956 - INFO - Building motif structures...
+2025-10-01 12:01:23,059 - INFO - Sampled 26601 triads
+2025-10-01 12:01:23,242 - INFO - Motif adjacency shape: (3783, 3783)
+2025-10-01 12:01:23,242 - INFO - Motif adjacency nnz (non-zeros): 58932
+2025-10-01 12:01:23,242 - INFO - Motif adjacency density: 0.004118
+2025-10-01 12:01:23,242 - INFO - Motif adjacency value range: [1.0000, 228.0000]
+2025-10-01 12:01:23,245 - INFO - After normalization - nnz: 58932
+2025-10-01 12:01:23,245 - INFO - After normalization - value range: [0.011977, 31.025095]
+2025-10-01 12:01:23,245 - INFO - After normalization - mean value: 1.000000
+2025-10-01 12:01:23,246 - INFO - After normalization - median value: 0.442089
+2025-10-01 12:01:23,337 - INFO - COO arrays - rows: 58932, cols: 58932, vals: 58932
+2025-10-01 12:01:23,337 - INFO - Node ID range in motif matrix: [11, 3762]
+2025-10-01 12:01:23,337 - INFO - Training graph has nodes: 0 to 3782
+2025-10-01 12:01:23,348 - INFO - Training nodes in motif matrix: 2475 / 3783 (65.4%)
+2025-10-01 12:01:23,356 - INFO - Triads indexed for 2475 unique nodes
+2025-10-01 12:01:23,357 - INFO - Motif structures built in 0.40s
+2025-10-01 12:01:23,392 - INFO - Computing edge weights...
+2025-10-01 12:01:23,934 - INFO - Edge weights computed in 0.54s
+2025-10-01 12:01:24,945 - INFO - Total initialization time: 2.02s
+2025-10-01 12:01:24,946 - INFO - Starting training...
+2025-10-01 12:01:25,561 - INFO - pull_energy=0.018648
+2025-10-01 12:01:25,577 - INFO - dot_pos_mu=2.200±0.062, dot_neg_mu=2.209±0.065
+2025-10-01 12:01:28,898 - INFO - Epoch 0: epoch=0, accuracy=0.5630, f1_micro=0.7098, f1_macro=0.4130, f1_weighted=0.5630, auc=0.5473, eval_time=3.9525
+2025-10-01 12:01:29,070 - ERROR - Training failed with error: "addmm_sparse_cuda" not implemented for 'Half'
+2025-10-01 12:01:29,074 - ERROR - Traceback (most recent call last):
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1206, in main
+    run(dataset=dataset, k=K)
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1103, in run
+    loss, loss_dict = model.criterion_motif(
+                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 582, in criterion_motif
+    Z = self.enc(unique_nodes_list)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 413, in forward
+    neigh_feats = [agg(nodes, adj, ind) for adj, agg, ind in
+                  ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 453, in forward
+    new_embeddings = self.out_linear_layer(self.features(n2))
+                                           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 943, in <lambda>
+    aggs2 = [aggregator(lambda n: enc1(n), EMBEDDING_SIZE1, EMBEDDING_SIZE1, num_nodes)
+                                 ^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 413, in forward
+    neigh_feats = [agg(nodes, adj, ind) for adj, agg, ind in
+                  ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\anaconda3\envs\torchcuda\Lib\site-packages\torch\nn\modules\module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 470, in forward
+    row_sum = torch.sparse.mm(matrix, torch.ones(size=(batch_node_num, 1)).to(DEVICES))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: "addmm_sparse_cuda" not implemented for 'Half'
+

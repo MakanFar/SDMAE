@@ -1,0 +1,38 @@
+2025-10-06 10:29:10,647 - INFO - ================================================================================
+2025-10-06 10:29:10,647 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-06 10:29:10,647 - INFO - ================================================================================
+2025-10-06 10:29:10,647 - INFO - NUM_NODE: 3783
+2025-10-06 10:29:10,648 - INFO - WEIGHT_DECAY: 0.0001
+2025-10-06 10:29:10,648 - INFO - NODE_FEAT_SIZE: 20
+2025-10-06 10:29:10,648 - INFO - EMBEDDING_SIZE: 20
+2025-10-06 10:29:10,648 - INFO - LEARNING_RATE: 0.001
+2025-10-06 10:29:10,648 - INFO - BATCH_SIZE: 500
+2025-10-06 10:29:10,648 - INFO - EPOCHS: 50
+2025-10-06 10:29:10,648 - INFO - DROPOUT: 0.0
+2025-10-06 10:29:10,648 - INFO - AGGREGATOR: mean
+2025-10-06 10:29:10,648 - INFO - ALPHA: 0.02
+2025-10-06 10:29:10,648 - INFO - BETA: 0.02
+2025-10-06 10:29:10,648 - INFO - DEVICE: cpu
+2025-10-06 10:29:10,648 - INFO - ================================================================================
+2025-10-06 10:29:10,649 - INFO - Starting training for dataset: bitcoin_alpha, fold: 1
+2025-10-06 10:29:10,649 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 50, 'lr': 0.001, 'weight_decay': 0.0001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '0', 'agg': 'mean', 'alpha': 0.02, 'beta': 0.02, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 2, 'patience': 10, 'warmup_epochs': 5, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 500, 'triad_prob': 0.6, 'motif_scale': 1.0, 'motif_loss_type': 'l2', 'motif_gamma': 0.2, 'use_motif_channels': True}
+2025-10-06 10:29:10,677 - INFO - Data loaded in 0.03s
+2025-10-06 10:29:10,677 - INFO - Building motif structures...
+2025-10-06 10:29:10,825 - INFO - Sampled 26601 triads
+2025-10-06 10:29:11,670 - INFO - [motif:out_in_pos] nnz=5155, mean=0.988846
+2025-10-06 10:29:11,670 - INFO - [motif:out_in_neg] nnz=454, mean=0.986079
+2025-10-06 10:29:11,670 - INFO - [motif:co_out] nnz=38406, mean=0.917270
+2025-10-06 10:29:11,670 - INFO - [motif:co_in] nnz=42270, mean=0.920956
+2025-10-06 10:29:11,670 - INFO - [motif:out_in_pos] shape=(3786, 3786), nnz=5155, density=0.000360, range=(3.36766933529071e-07, 8.767296848057596)
+2025-10-06 10:29:11,670 - INFO - [motif:out_in_neg] shape=(3786, 3786), nnz=454, density=0.000032, range=(1.2105319141697437e-06, 6.065624112467059)
+2025-10-06 10:29:11,670 - INFO - [motif:co_out] shape=(3786, 3786), nnz=38406, density=0.002679, range=(0.00949551145222233, 11.376564757448685)
+2025-10-06 10:29:11,679 - INFO - [motif:co_in] shape=(3786, 3786), nnz=42270, density=0.002949, range=(0.00825434982491503, 11.268538269436528)
+2025-10-06 10:29:11,679 - ERROR - Training failed with error: cannot access local variable 'features' where it is not associated with a value
+2025-10-06 10:29:11,679 - ERROR - Traceback (most recent call last):
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1283, in main
+    run(dataset=dataset, k=1)
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 986, in run
+    print("feature weight size:", features.weight.size())
+                                  ^^^^^^^^
+UnboundLocalError: cannot access local variable 'features' where it is not associated with a value
+

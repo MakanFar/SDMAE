@@ -1,0 +1,30 @@
+2025-10-06 10:25:05,596 - INFO - ================================================================================
+2025-10-06 10:25:05,596 - INFO - SDGNN with Motif-based Higher-order Learning (Enhanced)
+2025-10-06 10:25:05,596 - INFO - ================================================================================
+2025-10-06 10:25:05,596 - INFO - NUM_NODE: 3783
+2025-10-06 10:25:05,596 - INFO - WEIGHT_DECAY: 0.0001
+2025-10-06 10:25:05,596 - INFO - NODE_FEAT_SIZE: 20
+2025-10-06 10:25:05,596 - INFO - EMBEDDING_SIZE: 20
+2025-10-06 10:25:05,596 - INFO - LEARNING_RATE: 0.001
+2025-10-06 10:25:05,596 - INFO - BATCH_SIZE: 500
+2025-10-06 10:25:05,596 - INFO - EPOCHS: 50
+2025-10-06 10:25:05,596 - INFO - DROPOUT: 0.0
+2025-10-06 10:25:05,596 - INFO - AGGREGATOR: mean
+2025-10-06 10:25:05,596 - INFO - ALPHA: 0.02
+2025-10-06 10:25:05,596 - INFO - BETA: 0.02
+2025-10-06 10:25:05,596 - INFO - DEVICE: cpu
+2025-10-06 10:25:05,596 - INFO - ================================================================================
+2025-10-06 10:25:05,596 - INFO - Starting training for dataset: bitcoin_alpha, fold: 0
+2025-10-06 10:25:05,596 - INFO - Configuration: {'devices': 'cpu', 'seed': 13, 'epochs': 50, 'lr': 0.001, 'weight_decay': 0.0001, 'dataset': 'bitcoin_alpha', 'dim': 20, 'fea_dim': 20, 'batch_size': 500, 'dropout': 0.0, 'k': '0', 'agg': 'mean', 'alpha': 0.02, 'beta': 0.02, 'max_pos_per_u': 50, 'max_neg_per_u': 50, 'eval_every': 2, 'patience': 10, 'warmup_epochs': 5, 'use_cache': True, 'lr_schedule': True, 'grad_clip': 5.0, 'triad_samples': 500, 'triad_prob': 0.6, 'motif_scale': 1.0, 'motif_loss_type': 'l2', 'motif_gamma': 0.2, 'use_motif_channels': True}
+2025-10-06 10:25:05,596 - ERROR - Training failed with error: [Errno 2] No such file or directory: './experiment-data/bitcoin_alpha-train-0.edgelist'
+2025-10-06 10:25:05,596 - ERROR - Traceback (most recent call last):
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 1282, in main
+    run(dataset=dataset, k=K)
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 887, in run
+    adj_lists1, adj_lists1_1, adj_lists1_2, adj_lists2, adj_lists2_1, adj_lists2_2, adj_lists3 = load_data2(filename)
+                                                                                                 ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Makan\Documents\code\SDMAE\sdgnn.py", line 828, in load_data2
+    with open(filename) as fp:
+         ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: './experiment-data/bitcoin_alpha-train-0.edgelist'
+
