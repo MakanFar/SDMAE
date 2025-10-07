@@ -5,6 +5,7 @@
 @file: logistic_function.py
 @time: 2018/12/16
 """
+from sklearn.preprocessing import StandardScaler
 
 import os
 import sys
@@ -84,41 +85,68 @@ def read_train_test_data(dataset, k):
     return np.array(train_X), np.array(train_y), np.array(test_X), np.array(test_y)
 
 
-
-def common_logistic(dataset, k, embeddings, model):
+def _make_pair_features(pairs, E, mode="all"):
+    # pairs: (N,2) int array; E: [num_nodes, dim] float array
+    A = E[pairs[:,0]]
+    B = E[pairs[:,1]]
+    if mode == "concat":
+        X = np.hstack([A, B])
+    elif mode == "hadamard":
+        X = A * B
+    elif mode == "l1":
+        X = np.abs(A - B)
+    elif mode == "l2":
+        D = A - B
+        X = D * D
+    elif mode == "all":
+        # works very well in practice
+        X = np.hstack([
+            A * B,                  # hadamard
+            np.abs(A - B),          # L1
+            (A - B) ** 2,           # L2
+            A, B                    # (optional) raw concat
+        ])
+    else:
+        raise ValueError(f"unknown mode: {mode}")
+    return X.astype(np.float32)
+                    
+def common_logistic(dataset, k, embeddings, model_name, feat_mode="all"):
     train_X, train_y, test_X, test_y  = read_train_test_data(dataset, k)
 
-    train_X1 = []
-    test_X1 = []
+    # --- build features with interactions ---
+    X_train = _make_pair_features(train_X, embeddings, mode=feat_mode)
+    X_test  = _make_pair_features(test_X,  embeddings, mode=feat_mode)
 
-    for i, j in train_X:
-        train_X1.append(np.concatenate([embeddings[i], embeddings[j]]))
+    # --- scale features (LR benefits a lot) ---
+    scaler = StandardScaler(with_mean=True, with_std=True)
+    X_train = scaler.fit_transform(X_train)
+    X_test  = scaler.transform(X_test)
 
-    for i, j in test_X:
-        test_X1.append(np.concatenate([embeddings[i], embeddings[j]]))
+    # --- logistic regression ---
+    clf = linear_model.LogisticRegression(
+        solver="lbfgs", max_iter=5000, class_weight="balanced", n_jobs=-1
+    )
+    clf.fit(X_train, train_y)
+    pred   = clf.predict(X_test)
+    proba1 = clf.predict_proba(X_test)[:, 1]
 
+    pos_ratio = np.mean(test_y)
+    accuracy  = metrics.accuracy_score(test_y, pred)
+    f1_bin    = metrics.f1_score(test_y, pred)                 # positive class
+    f1_macro  = metrics.f1_score(test_y, pred, average='macro')
+    f1_micro  = metrics.f1_score(test_y, pred, average='micro')
+    auc_score = metrics.roc_auc_score(test_y, proba1)
 
-    logistic_function = linear_model.LogisticRegression(solver="lbfgs", max_iter=5000, class_weight="balanced", n_jobs=-1)
-    logistic_function.fit(train_X1, train_y)
-    pred = logistic_function.predict(test_X1)
-    pred_p = logistic_function.predict_proba(test_X1)
+    # --- dot-product baseline (to check if LR is bottleneck) ---
+    dot_scores = np.sum(embeddings[test_X[:,0]] * embeddings[test_X[:,1]], axis=1)
+    # normalize dot scores for AUC (no need to be probabilities)
+    auc_dot = metrics.roc_auc_score(test_y, dot_scores)
 
+    print(f"[{model_name}] feat={feat_mode}  pos_ratio={pos_ratio:.3f}  "
+          f"acc={accuracy:.4f}  f1={f1_bin:.4f}  f1_macro={f1_macro:.4f}  "
+          f"f1_micro={f1_micro:.4f}  auc={auc_score:.4f}  (dot_auc={auc_dot:.4f})")
 
-    pos_ratio =  np.sum(test_y) / test_y.shape[0]
-    accuracy =  metrics.accuracy_score(test_y, pred)
-    f1_score0 =  metrics.f1_score(test_y, pred)
-    f1_score1 =  metrics.f1_score(test_y, pred, average='macro')
-    f1_score2 =  metrics.f1_score(test_y, pred, average='micro')
-
-    auc_score =  metrics.roc_auc_score(test_y, pred_p[:, 1])
-    print("pos_ratio:", pos_ratio)
-    print('accuracy:', accuracy)
-    print("f1_score:", f1_score0)
-    print("macro f1_score:", f1_score1)
-    print("micro f1_score:", f1_score2)
-    print("auc score:", auc_score)
-
-    return pos_ratio, accuracy, f1_score0, f1_score1, f1_score2,  auc_score
+    return pos_ratio, accuracy, f1_bin, f1_macro, f1_micro, auc_score
 
 
 def logistic_embedding0(k=1, dataset='epinions'):
