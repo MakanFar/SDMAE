@@ -26,7 +26,11 @@ def _row_normalize_csr(mat: sp.csr_matrix) -> sp.csr_matrix:
 
 def scipy_csr_to_torch_sparse(mat: sp.csr_matrix, device: torch.device):
     mat = mat.tocoo()
-    indices = torch.tensor([mat.row, mat.col], dtype=torch.long, device=device)
+    indices = torch.as_tensor(
+    np.stack([mat.row, mat.col], axis=0),
+    dtype=torch.long,
+    device=device,
+)
     values = torch.tensor(mat.data, dtype=torch.float32, device=device)
     return torch.sparse_coo_tensor(indices, values, torch.Size(mat.shape), device=device).coalesce()
 

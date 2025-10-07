@@ -7,6 +7,7 @@ import scipy.sparse as sp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from copy import deepcopy
 
 from common import DATASET_NUM_DIC
 from fea_extra import FeaExtra
@@ -34,6 +35,16 @@ parser.add_argument('--bpr_weight', type=float, default=1.0)
 parser.add_argument('--sign_bce_weight', type=float, default=0.5)
 parser.add_argument('--eval_every', type=int, default=2)
 parser.add_argument('--log_dir', type=str, default='./logs')
+parser.add_argument('--disable_motif', action='store_true',
+                    help='Bypass motif propagation and fusion (pure base encoder).')
+
+parser.add_argument('--lr_sched', choices=['plateau','step','cosine','none'], default='plateau')
+parser.add_argument('--lr_factor', type=float, default=0.5)       # LR decay factor
+parser.add_argument('--lr_patience', type=int, default=5)         # epochs (eval cycles) with no improvement
+parser.add_argument('--early_stop_patience', type=int, default=10)
+parser.add_argument('--min_delta', type=float, default=1e-4)      # min AUC gain to count as improvement
+parser.add_argument('--step_size', type=int, default=10)          # for StepLR
+parser.add_argument('--cosine_tmax', type=int, default=50)        # for CosineAnnealingLR
 args = parser.parse_args()
 
 # --------------------- Globals --------------------------
@@ -84,7 +95,7 @@ class Encoder(nn.Module):
         return self.proj(X)
 
 class AttentionAggregator(nn.Module):
-    def __init__(self, features, in_dim, out_dim, num_nodes, dropout=0.0, slope=0.1):
+    def __init__(self, features, in_dim, out_dim, num_nodes, dropout=args.dropout, slope=0.1):
         super().__init__()
         self.features = features; self.in_dim = in_dim; self.out_dim = out_dim
         self.a = nn.Parameter(torch.empty(out_dim*2, 1)); nn.init.kaiming_normal_(self.a)
@@ -113,6 +124,8 @@ class AttentionAggregator(nn.Module):
         out = torch.sparse.mm(mat, new_emb) / (denom + 1e-8)
         ret = out[self.unique_nodes[nodes], :]
         return ret
+def _get_lr(optimizer):
+    return optimizer.param_groups[0]['lr']
 
 def _csr_rows_cols(adj_csr, nodes):
     if torch.is_tensor(nodes):
@@ -185,10 +198,11 @@ class MotifFusion(nn.Module):
 
 # ----------------- Final model: SDM-GNN -----------------
 class SDM_GNN(nn.Module):
-    def __init__(self, base_enc: Encoder, motif_prop: MotifPropagate, dim: int):
+    def __init__(self, base_enc: Encoder, motif_prop: MotifPropagate, dim: int, disable_motif: bool = False):
         super().__init__()
         self.enc = base_enc
         self.mprop = motif_prop
+        self.disable_motif = disable_motif
         self.fuse = MotifFusion(dim)
         self.ffn = nn.Sequential(
             nn.Linear(dim, dim),
@@ -196,40 +210,45 @@ class SDM_GNN(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(dim, dim)
         )
+        self.edge_scorer = nn.Bilinear(dim, dim, 1)
 
     def forward_batch(self, batch_nodes, Z_motif_cache):
-        """Forward pass for a batch of nodes using cached motif features."""
-        if isinstance(batch_nodes, list) or isinstance(batch_nodes, np.ndarray):
+        if isinstance(batch_nodes, (list, np.ndarray)):
             batch_idx = torch.as_tensor(batch_nodes, dtype=torch.long, device=DEV)
         else:
             batch_idx = batch_nodes.to(DEV)
-        
-        # Edge encoder (with gradients)
-        Z_edge_batch = self.enc(batch_idx)
-        
-        # Get cached motif features
-        Z_motif_batch = Z_motif_cache[batch_idx]
-        
-        # Fuse and final FFN
+
+        Z_edge_batch  = self.enc(batch_idx)                 # with grad
+
+        if self.disable_motif:
+            Z_final = self.ffn(Z_edge_batch)
+            return Z_final, batch_idx
+
+        Z_motif_batch = self.mprop.alpha * Z_motif_cache[batch_idx]  # alpha learns
+
         Z_fused = self.fuse(Z_edge_batch, Z_motif_batch)
         Z_final = self.ffn(Z_fused)
-        
         return Z_final, batch_idx
 
     def precompute_motif_features(self, num_nodes):
-        """Pre-compute motif-enhanced features for all nodes (no grad)."""
         with torch.no_grad():
             idx = torch.arange(num_nodes, dtype=torch.long, device=DEV)
-            Z_edge_all = self.enc(idx).detach()
-            Z_motif_all = self.mprop(Z_edge_all)
-        return Z_motif_all
+            Z_edge_all = self.enc(idx)
+            S = torch.sparse.mm(self.mprop.M, Z_edge_all)
+        return S
 
 # ----------------- Losses -----------------
 def bpr_loss(pos_scores, neg_scores):
     return F.softplus(neg_scores - pos_scores).mean()
 
-def sign_bce_loss(scores, labels,pos_weight):
-    return F.binary_cross_entropy_with_logits(scores, labels, pos_weight=pos_weight)
+# NEW: per-sample weighting (upweight negatives)
+def sign_bce_loss(scores, labels, w_pos=1.0, w_neg=1.0):
+    """
+    scores: [B,1] logits, labels: [B,1] in {0,1}
+    """
+    bce = F.binary_cross_entropy_with_logits(scores, labels, reduction='none')
+    weights = w_pos * labels + w_neg * (1 - labels)
+    return (weights * bce).mean()
 
 # ----------------- Data loading & helpers -----------------
 def load_edgelist_signed(filename):
@@ -257,16 +276,15 @@ def adj_from_dict(adj_dicts, N):
     return sp.csr_matrix((np.ones(len(e), dtype=np.float32), (e[:,0], e[:,1])), shape=(N, N))
 
 def sample_negative(u, N, pos_set, max_tries=100):
-    """Sample negative with max retries to prevent infinite loops."""
+    """Random negative (fallback for hard-neg)."""
     for _ in range(max_tries):
         v = np.random.randint(0, N)
         if v != u and v not in pos_set:
             return v
-    # Fallback: find any valid negative
     candidates = set(range(N)) - pos_set - {u}
     if candidates:
         return np.random.choice(list(candidates))
-    return None  # No valid negatives
+    return None
 
 # ----------------- Metrics Logger -----------------
 class MetricsLogger:
@@ -296,7 +314,6 @@ class MetricsLogger:
         self.metrics['time'].append(elapsed)
     
     def log_eval(self, pos_ratio, acc, f1_0, f1_1, f1_2, auc):
-        # Store most recent eval metrics (align with last logged epoch)
         self.metrics['pos_ratio'].append(pos_ratio)
         self.metrics['accuracy'].append(acc)
         self.metrics['f1_macro'].append(f1_2)
@@ -305,7 +322,7 @@ class MetricsLogger:
         self.metrics['auc'].append(auc)
     
     def save(self):
-        filepath = os.path.join(self.log_dir, f'metrics_{self.dataset}_k{self.k}.json')
+        filepath = os.path.join(self.log_dir, f'metrics_motif_{self.dataset}_k{self.k}.json')
         with open(filepath, 'w') as f:
             json.dump(self.metrics, f, indent=2)
         print(f"Metrics saved to {filepath}")
@@ -355,21 +372,33 @@ def run(dataset, k):
     mprop = MotifPropagate(M_torch).to(DEV)
 
     # Model
-    model = SDM_GNN(enc, mprop, EMB).to(DEV)
+    model = SDM_GNN(enc, mprop, EMB, disable_motif=args.disable_motif).to(DEV)
 
     # Optimizer with gradient clipping
     opt = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
+
+    if args.lr_sched == 'plateau':
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        opt, mode='max', factor=args.lr_factor, patience=args.lr_patience)
+    elif args.lr_sched == 'step':
+        scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=args.step_size, gamma=args.lr_factor)
+    elif args.lr_sched == 'cosine':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.cosine_tmax)
+    else:
+        scheduler = None
 
     # Prepare edges
     pos_edges = [(u, v, 1) for u, nbrs in pos_out.items() for v in nbrs]
     neg_edges = [(u, v, 0) for u, nbrs in neg_out.items() for v in nbrs]
     all_edges = pos_edges + neg_edges
 
+    # Class weights (NEG minority → upweight)
     num_pos = len(pos_edges)
     num_neg = len(neg_edges)
-    pos_weight = torch.tensor([num_neg / max(1, num_pos)], device=DEV, dtype=torch.float32)
+    w_pos = 1.0
+    w_neg = num_pos / max(1, num_neg)  # ~ upweight negatives
 
-    # Positive sets for negative sampling
+    # Positive sets for negatives / hard-negative filtering
     pos_sets = defaultdict(set)
     for u, v, _ in all_edges:
         pos_sets[u].add(v)
@@ -377,114 +406,199 @@ def run(dataset, k):
     print(f"\nTraining on {len(all_edges)} edges ({len(pos_edges)} pos, {len(neg_edges)} neg)")
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
+    # --- Balanced batch sampler (1:1 pos/neg with replacement) ---
+    pos_only = [(u,v,1) for (u,v,_) in pos_edges]
+    neg_only = [(u,v,0) for (u,v,_) in neg_edges]
+    def next_batch(B):
+        bp = B // 2
+        bn = B - bp
+        P = random.choices(pos_only, k=min(bp, len(pos_only))) if len(pos_only) >= bp else random.choices(pos_only, k=bp)
+        Nn = random.choices(neg_only, k=bn)  # oversample negs if needed
+        batch = P + Nn
+        random.shuffle(batch)
+        return batch
+    
+    best_auc = -float('inf')
+    best_epoch = -1
+    no_improve = 0
+    best_model_path = os.path.join(OUTDIR, f'best-model-{dataset}-k{k}.pt')
+    best_embed_path = os.path.join(OUTDIR, f'best-embedding-{dataset}-{k}.npy')
+
     for epoch in range(EPOCHS + 1):
         model.train()
-        np.random.shuffle(all_edges)
-        
         t0 = time.time()
-        
+
         # ============ PHASE 1: Pre-compute motif features ============
-        Z_motif_cache = model.precompute_motif_features(N)
-        
+        Z_motif_cache = None if args.disable_motif else model.precompute_motif_features(N)
+
+
         # ============ PHASE 2: Mini-batch training ============
         total_loss = 0.0
         total_bpr = 0.0
         total_bce = 0.0
         num_batches = 0
-        
-        for i in range(0, len(all_edges), BATCH):
-            batch = all_edges[i:i+BATCH]
+
+        num_steps = max(1, len(all_edges) // BATCH)
+        for _ in range(num_steps):
+            batch = next_batch(BATCH)
             opt.zero_grad()
-            
-            # Get unique nodes in batch
-            batch_nodes = set([u for (u,v,y) in batch] + [v for (u,v,y) in batch])
-            negatives = []
+
+            # Build batch node set and random negatives for fallback
+            batch_nodes = set([u for (u,v,_) in batch] + [v for (_,v,_) in batch])
+            rand_neg_by_u = {}
             for (u,v,y) in batch:
-                if y==1:
+                if y == 1:
                     vn = sample_negative(u, N, pos_sets[u])
                     if vn is not None:
-                        negatives.append((u, vn))
+                        rand_neg_by_u[u] = vn
                         batch_nodes.add(vn)
             batch_nodes = list(batch_nodes)
-            
-            # Forward pass for batch
+
+            # Forward pass for batch nodes
             Z_batch, batch_idx = model.forward_batch(batch_nodes, Z_motif_cache)
-            
-            # Create mapping: node_id -> position in Z_batch
             node_to_idx = {int(n.item()): i for i, n in enumerate(batch_idx)}
-            
-                        # use indices (all should exist now)
+
+            # --- BPR with HARD negatives in-batch ---
             pos_pairs = [(u,v) for (u,v,y) in batch if y==1]
-            pos_s = [(Z_batch[node_to_idx[u]] * Z_batch[node_to_idx[v]]).sum()
-                    for (u,v) in pos_pairs]
-            neg_s = [(Z_batch[node_to_idx[u]] * Z_batch[node_to_idx[vn]]).sum()
-                    for (u,vn) in negatives]
-            
+            pos_s, neg_s = [], []
+
+            # Precompute candidate matrix for hard negs
+            cand_nodes = batch_nodes
+            cand_idx = torch.as_tensor([node_to_idx[n] for n in cand_nodes], device=DEV)
+            Z_cand = Z_batch[cand_idx]  # [C, d]
+
+            for (u,v) in pos_pairs:
+                ui = node_to_idx[u]
+                vi = node_to_idx[v]
+
+                # score(u, all candidates)
+                u_rep = Z_batch[ui].unsqueeze(0).expand(Z_cand.size(0), -1)
+                cand_scores = model.edge_scorer(u_rep, Z_cand).squeeze(-1)  # [C]
+
+                # sort by desc score to pick hardest v'
+                order = torch.argsort(cand_scores, descending=True).tolist()
+                vn = None
+                for r in order:
+                    vv = cand_nodes[r]
+                    if vv != u and vv != v and vv not in pos_sets[u]:
+                        vn = vv
+                        break
+                if vn is None:
+                    vn = rand_neg_by_u.get(u, None)
+                    if vn is None or vn not in node_to_idx:
+                        continue  # no neg found; skip this pair
+
+                vni = node_to_idx[vn]
+                s_pos = model.edge_scorer(Z_batch[ui].unsqueeze(0), Z_batch[vi].unsqueeze(0)).squeeze()
+                s_neg = model.edge_scorer(Z_batch[ui].unsqueeze(0), Z_batch[vni].unsqueeze(0)).squeeze()
+                pos_s.append(s_pos)
+                neg_s.append(s_neg)
+
             if pos_s:
                 pos_scores = torch.stack(pos_s)
                 neg_scores = torch.stack(neg_s)
                 loss_bpr = bpr_loss(pos_scores, neg_scores)
             else:
                 loss_bpr = torch.tensor(0.0, device=DEV)
-            
-            # Sign BCE Loss
-            u_list = [node_to_idx[u] for (u,v,y) in batch]
-            v_list = [node_to_idx[v] for (u,v,y) in batch]
-            lbl = torch.tensor([y for (_,_,y) in batch], device=DEV, dtype=torch.float32)
-            
+
+            # --- Sign BCE on observed edges (balanced weights) ---
+            u_list = [node_to_idx[u] for (u,_,_) in batch]
+            v_list = [node_to_idx[v] for (_,v,_) in batch]
+            lbl = torch.tensor([y for (_,_,y) in batch], device=DEV, dtype=torch.float32).view(-1,1)
+
             u_emb = Z_batch[u_list]
             v_emb = Z_batch[v_list]
-            logits = (u_emb * v_emb).sum(dim=1, keepdim=True)
-            loss_bce = sign_bce_loss(logits, lbl.view(-1,1),pos_weight)
-            
-            # Total loss
+            logits = model.edge_scorer(u_emb, v_emb)  # [B,1]
+            loss_bce = sign_bce_loss(logits, lbl, w_pos=w_pos, w_neg=w_neg)
+
+            # --- Total loss ---
             loss = args.bpr_weight * loss_bpr + args.sign_bce_weight * loss_bce
             loss.backward()
-            
+
             # Gradient clipping
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            
             opt.step()
-            
-            total_loss += loss.item()
-            total_bpr += loss_bpr.item()
-            total_bce += loss_bce.item()
+
+            total_loss += float(loss.item())
+            total_bpr += float(loss_bpr.item())
+            total_bce += float(loss_bce.item())
             num_batches += 1
-        
-        # Average losses
+
+        # Averages
         avg_loss = total_loss / num_batches
         avg_bpr = total_bpr / num_batches
         avg_bce = total_bce / num_batches
         elapsed = time.time() - t0
-        
-        # Log training metrics
+
+        # Log training metrics + alpha
         logger.log_train(epoch, avg_loss, avg_bpr, avg_bce, elapsed)
+        print(f"Epoch {epoch:03d} | Loss: {avg_loss:.4f} (BPR: {avg_bpr:.4f}, BCE: {avg_bce:.4f}) "
+              f"| alpha={model.mprop.alpha.data.item():.3f} | Time: {elapsed:.2f}s")
         
+       
+
         # Evaluation
         if epoch % args.eval_every == 0:
             model.eval()
             with torch.no_grad():
-                # Final embeddings for evaluation
-                Z_motif_final = model.precompute_motif_features(N)
+                Z_motif_base  = model.precompute_motif_features(N)       # S = M @ Z_edge (no α)
+                       # apply α here
                 idx = torch.arange(N, dtype=torch.long, device=DEV)
-                Z_edge_final = model.enc(idx)
-                Z_fused_final = model.fuse(Z_edge_final, Z_motif_final)
-                Z_final = model.ffn(Z_fused_final).detach().cpu().numpy()
-            
+                Z_edge_final  = model.enc(idx)
+
+                if args.disable_motif:
+                    Z_final = model.ffn(Z_edge_final).cpu().numpy()
+                else:
+                    Z_motif_final = model.mprop.alpha * Z_motif_base  
+                    Z_fused_final = model.fuse(Z_edge_final, Z_motif_final)
+                    Z_final       = model.ffn(Z_fused_final).cpu().numpy()
+
             # Save embeddings
             np.save(os.path.join(OUTDIR, f'embedding-{dataset}-{k}-{epoch}.npy'), Z_final)
-            
-            # Evaluate
+
+            # Evaluate (ensure your logistic probe uses Hadamard/L1/L2 + scaling)
             pos_ratio, acc, f1_0, f1_1, f1_2, auc = logistic_embedding(
                 k=k, dataset=dataset, epoch=epoch, dirname=OUTDIR
             )
-            
-            # Log eval metrics
+
             logger.log_eval(pos_ratio, acc, f1_0, f1_1, f1_2, auc)
             logger.print_summary(epoch)
+
+            if scheduler:
+                if args.lr_sched == 'plateau':
+                    scheduler.step(auc)   # monitors validation AUC
+                else:
+                    scheduler.step()      # step/cosine advance each epoch
+
+            # --- Early stopping on AUC ---
+            if auc > best_auc + args.min_delta:
+                best_auc = auc
+                best_epoch = epoch
+                no_improve = 0
+                # Save best weights + embeddings
+                torch.save(
+                    {'epoch': epoch,
+                    'state_dict': model.state_dict(),
+                    'auc': auc,
+                    'alpha': float(model.mprop.alpha.data.item()),
+                    'lr': _get_lr(opt)},
+                    best_model_path
+                )
+                # We already have Z_final here
+                np.save(best_embed_path, Z_final)
+                print(f"[BEST] AUC improved to {best_auc:.4f} @ epoch {best_epoch}. Saved best model/embeddings.")
+            else:
+                no_improve += 1
+                print(f"No AUC improvement for {no_improve} evals (best {best_auc:.4f} @ {best_epoch}).")
+                if no_improve >= args.early_stop_patience:
+                    print(f"Early stopping triggered (patience={args.early_stop_patience}). "
+                        f"Best AUC={best_auc:.4f} at epoch {best_epoch}.")
+                    break
         else:
-            print(f'Epoch {epoch:03d} | Loss: {avg_loss:.4f} (BPR: {avg_bpr:.4f}, BCE: {avg_bce:.4f}) | Time: {elapsed:.2f}s')
-    
+            if scheduler and args.lr_sched in ('step', 'cosine'):
+                scheduler.step()
+            print(f"  (lr={_get_lr(opt):.2e})")
+
     # Save metrics to file
     logger.save()
 
