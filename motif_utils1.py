@@ -27,10 +27,10 @@ def _row_normalize_csr(mat: sp.csr_matrix) -> sp.csr_matrix:
 def scipy_csr_to_torch_sparse(mat: sp.csr_matrix, device: torch.device):
     mat = mat.tocoo()
     indices = torch.as_tensor(
-        np.stack([mat.row, mat.col], axis=0),
-        dtype=torch.long,
-        device=device,
-    )
+    np.stack([mat.row, mat.col], axis=0),
+    dtype=torch.long,
+    device=device,
+)
     values = torch.tensor(mat.data, dtype=torch.float32, device=device)
     return torch.sparse_coo_tensor(indices, values, torch.Size(mat.shape), device=device).coalesce()
 
@@ -147,35 +147,31 @@ def build_signed_directed_motif_adj(pos_in, pos_out, neg_in, neg_out, num_nodes)
         out[name] = _row_normalize_csr(csr)
     return out
 
-# ---------------- NEW: multi-channel helpers ----------------
-
-MOTIF_ORDER = [
-    'ff_++','ff_+-','ff_-+','ff_--',
-    'coout_++','coout_+-','coout_-+','coout_--',
-    'chain_++','chain_+-','chain_-+','chain_--',
-    'coin_++','coin_+-','coin_-+','coin_--'
-]
-
-def motif_dict_to_ordered_list(motif_dict: dict):
+def combine_motif_set(motif_dict: dict, weights: dict = None) -> sp.csr_matrix:
     """
-    Convert dict[name]->CSR into a fixed-order list of CSR matrices and parallel names.
-    Ensures stable channel ordering across runs.
+    Weighted sum of motif matrices: M_sum = (Σ w_i * M_i) / (Σ w_i)
+    weights: dict[name] -> float, default 1.0
     """
     mats = []
-    names = []
-    for name in MOTIF_ORDER:
-        if name not in motif_dict:
-            # fill empty if missing
-            raise KeyError(f"Motif '{name}' missing from motif_dict.")
-        mats.append(motif_dict[name])
-        names.append(name)
-    return mats, names
+    wsum = 0.0
+    for name, mat in motif_dict.items():
+        w = 1.0 if (weights is None or name not in weights) else float(weights[name])
+        if w <= 0.0:
+            continue
+        mats.append(mat.multiply(w))
+        wsum += w
+    if not mats:
+        raise ValueError("No motif matrices to combine.")
+    M = mats[0]
+    for i in range(1, len(mats)):
+        M = M + mats[i]
+    if wsum > 0:
+        M = M * (1.0 / wsum)
+    return M
 
 def csr_power_iteration_max_singular(mat: sp.csr_matrix, iters=20):
     # crude σ_max estimate (L2 norm via power iteration)
     # operate on mat.T @ mat for largest eigenvalue
-    if mat.shape[0] == 0 or mat.shape[1] == 0:
-        return 1.0
     x = np.random.randn(mat.shape[1]).astype(np.float32)
     x /= np.linalg.norm(x) + 1e-8
     for _ in range(iters):
@@ -191,14 +187,3 @@ def spectrally_normalize(Msum: sp.csr_matrix) -> sp.csr_matrix:
     if sigma <= 0:
         sigma = 1.0
     return Msum * (1.0 / sigma)
-
-def normalize_each_and_to_torch(motif_csr_list, device: torch.device):
-    """
-    Spectrally normalize each motif matrix independently and convert to torch sparse.
-    Returns list[ torch.sparse_coo_tensor ] in the same order.
-    """
-    out = []
-    for csr in motif_csr_list:
-        Mnorm = spectrally_normalize(csr)
-        out.append(scipy_csr_to_torch_sparse(Mnorm, device))
-    return out

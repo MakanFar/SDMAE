@@ -8,15 +8,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from copy import deepcopy
-from sklearn.metrics import roc_auc_score, average_precision_score, accuracy_score, f1_score
-import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 from common import DATASET_NUM_DIC
 from fea_extra import FeaExtra
-from motif_utils import (
+from logistic_function import logistic_embedding
+from motif_utils1 import (
     build_signed_directed_motif_adj,
-    motif_dict_to_ordered_list,
-    normalize_each_and_to_torch
+    combine_motif_set, spectrally_normalize, scipy_csr_to_torch_sparse
 )
 
 # ------------------------- Args -------------------------
@@ -27,13 +26,14 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--lr', type=float, default=1e-3)
 parser.add_argument('--weight_decay', type=float, default=1e-3)
 parser.add_argument('--dataset', default='bitcoin_alpha')
-parser.add_argument('--dim', type=int, default=20)
-parser.add_argument('--fea_dim', type=int, default=20)
+parser.add_argument('--dim', type=int, default=32)
+parser.add_argument('--fea_dim', type=int, default=32)
 parser.add_argument('--batch_size', type=int, default=500)
 parser.add_argument('--dropout', type=float, default=0.0)
 parser.add_argument('--k', default=1)
 parser.add_argument('--agg', default='attention', choices=['mean','attention'])
-parser.add_argument('--sign_bce_weight', type=float, default=1.0)
+parser.add_argument('--bpr_weight', type=float, default=1.0)
+parser.add_argument('--sign_bce_weight', type=float, default=1)
 parser.add_argument('--eval_every', type=int, default=2)
 parser.add_argument('--log_dir', type=str, default='./logs')
 parser.add_argument('--disable_motif', action='store_true',
@@ -42,7 +42,7 @@ parser.add_argument('--disable_motif', action='store_true',
 parser.add_argument('--lr_sched', choices=['plateau','step','cosine','none'], default='plateau')
 parser.add_argument('--lr_factor', type=float, default=0.5)       # LR decay factor
 parser.add_argument('--lr_patience', type=int, default=3)         # epochs (eval cycles) with no improvement
-parser.add_argument('--early_stop_patience', type=int, default=10)
+parser.add_argument('--early_stop_patience', type=int, default=5)
 parser.add_argument('--min_delta', type=float, default=1e-4)      # min AUC gain to count as improvement
 parser.add_argument('--step_size', type=int, default=10)          # for StepLR
 parser.add_argument('--cosine_tmax', type=int, default=50)        # for CosineAnnealingLR
@@ -109,14 +109,12 @@ class AttentionAggregator(nn.Module):
         elif isinstance(nodes, list):
             nodes = np.array(nodes, dtype=np.int64)
         rows, cols = _csr_rows_cols(adj_csr, nodes)
-        unique = np.unique(np.concatenate([nodes, rows, cols])) if rows.size > 0 else np.unique(nodes)
+        unique = np.unique(np.concatenate([nodes, rows, cols]))
         self.unique_nodes[unique] = np.arange(len(unique))
-        r = np.vectorize(lambda x: self.unique_nodes[x])(rows) if rows.size > 0 else np.array([], dtype=np.int64)
-        c = np.vectorize(lambda x: self.unique_nodes[x])(cols) if cols.size > 0 else np.array([], dtype=np.int64)
+        r = np.vectorize(lambda x: self.unique_nodes[x])(rows)
+        c = np.vectorize(lambda x: self.unique_nodes[x])(cols)
         nu = torch.as_tensor(unique, dtype=torch.long, device=DEV)
         new_emb = self.out_linear(self.features(nu))
-        if r.size == 0:
-            return new_emb[self.unique_nodes[nodes], :]
         eij = torch.cat([new_emb[r,:], new_emb[c,:]], dim=1)
         e = torch.exp(self.leaky(eij @ self.a)).squeeze(-1)
         idx = torch.stack([torch.as_tensor(r, device=DEV), torch.as_tensor(c, device=DEV)], dim=0)
@@ -126,12 +124,15 @@ class AttentionAggregator(nn.Module):
         out = torch.sparse.mm(mat, new_emb) / (denom + 1e-8)
         ret = out[self.unique_nodes[nodes], :]
         return ret
+def _get_lr(optimizer):
+    return optimizer.param_groups[0]['lr']
 
 def _csr_rows_cols(adj_csr, nodes):
     if torch.is_tensor(nodes):
         nodes = nodes.detach().cpu().numpy()
     elif isinstance(nodes, list):
         nodes = np.array(nodes, dtype=np.int64)
+
     rows, cols = [], []
     for u in nodes:
         start, end = adj_csr.indptr[u], adj_csr.indptr[u + 1]
@@ -141,6 +142,7 @@ def _csr_rows_cols(adj_csr, nodes):
         rows_u = np.full(cols_u.shape, u, dtype=np.int64)
         rows.append(rows_u)
         cols.append(cols_u)
+
     if rows:
         return np.concatenate(rows), np.concatenate(cols)
     return np.array([], dtype=np.int64), np.array([], dtype=np.int64)
@@ -158,14 +160,12 @@ class MeanAggregator(nn.Module):
         elif isinstance(nodes, list):
             nodes = np.array(nodes, dtype=np.int64)
         rows, cols = _csr_rows_cols(adj_csr, nodes)
-        unique = np.unique(np.concatenate([nodes, rows, cols])) if rows.size > 0 else np.unique(nodes)
+        unique = np.unique(np.concatenate([nodes, rows, cols]))
         self.unique_nodes[unique] = np.arange(len(unique))
-        r = np.vectorize(lambda x: self.unique_nodes[x])(rows) if rows.size > 0 else np.array([], dtype=np.int64)
-        c = np.vectorize(lambda x: self.unique_nodes[x])(cols) if cols.size > 0 else np.array([], dtype=np.int64)
+        r = np.vectorize(lambda x: self.unique_nodes[x])(rows)
+        c = np.vectorize(lambda x: self.unique_nodes[x])(cols)
         nu = torch.as_tensor(unique, dtype=torch.long, device=DEV)
         new_emb = self.out_linear(self.features(nu))
-        if r.size == 0:
-            return new_emb[self.unique_nodes[nodes], :]
         values = torch.ones(len(r), device=DEV)
         idx = torch.stack([torch.as_tensor(r, device=DEV), torch.as_tensor(c, device=DEV)], dim=0)
         mat = torch.sparse_coo_tensor(idx, values, (len(unique), len(unique)), device=DEV).coalesce()
@@ -175,143 +175,71 @@ class MeanAggregator(nn.Module):
         out = torch.sparse.mm(mat, new_emb) / denom
         return out[self.unique_nodes[nodes], :]
 
-# ----------------- Motif propagation + fusion (multi-channel) -----------------
-class MotifPropagateMulti(nn.Module):
-    def __init__(self, M_list):
+# ----------------- Motif propagation + fusion -----------------
+class MotifPropagate(nn.Module):
+    def __init__(self, Mnorm_torch):
         super().__init__()
-        self.M_list = M_list  # list of sparse motif adjacency matrices
+        self.M = Mnorm_torch
+        self.alpha = nn.Parameter(torch.tensor(1.0))
 
-    def forward(self, Z, raw_weights):
-        """
-        Z: [N, d]
-        raw_weights: nn.Parameter([M]) before softmax
-        Returns:
-            motif_embeds: [N, M, d]
-            attn: softmax-normalized global motif weights
-        """
-        # normalize motif weights into probabilities
-        attn = torch.softmax(raw_weights, dim=0)  # [M]
+    def forward(self, Z):
+        return self.alpha * torch.sparse.mm(self.M, Z)
 
-        # compute weighted motif-propagated embeddings
-        motif_embeds = []
-        for i, M in enumerate(self.M_list):
-            # sparse matrix multiplication: motif propagation
-            S_i = torch.sparse.mm(M, Z)  # [N, d]
-
-            # apply motif-level attention weight (scaled propagation)
-            # multiply *after* propagation to keep gradients stable
-            S_i = S_i * attn[i]
-
-            # add small numerical safeguard
-            motif_embeds.append(S_i.unsqueeze(1))
-
-        motif_embeds = torch.cat(motif_embeds, dim=1)  # [N, M, d]
-        return motif_embeds, attn
-
-
-class MotifFusionMulti(nn.Module):
-    """
-    Node-wise attention over motif channels; fused with global motif weights and base embedding.
-    """
-    def __init__(self, dim, num_motifs):
+class MotifFusion(nn.Module):
+    def __init__(self, dim):
         super().__init__()
-        self.num_motifs = num_motifs
-        self.att_linear = nn.Linear(dim, dim)
-        self.att_score  = nn.Linear(dim, 1)
-        self.out_proj   = nn.Linear(dim + dim, dim)
+        self.fc = nn.Linear(dim*2, dim)
+        self.gate = nn.Linear(dim, dim)
 
-    def forward(self, base_Z, motif_Z_all, global_motif_weights=None):
-        """
-        base_Z: [N, d]
-        motif_Z_all: [N, M, d]
-        global_motif_weights: [M]
-        """
-        N, M, D = motif_Z_all.shape
-        motif_proj = torch.tanh(self.att_linear(motif_Z_all))
-        att_scores = self.att_score(motif_proj).squeeze(-1)  # [N, M]
-        node_attn = torch.softmax(att_scores, dim=1)
+    def forward(self, Z1, Z2):
+        h = torch.relu(self.fc(torch.cat([Z1, Z2], dim=1)))
+        beta = torch.softmax(self.gate(h), dim=1)
+        return beta * Z1 + (1.0 - beta) * Z2
 
-        if global_motif_weights is not None:
-            global_w = torch.softmax(global_motif_weights, dim=0)
-            node_attn = node_attn * global_w.unsqueeze(0)
-            node_attn = node_attn / (node_attn.sum(dim=1, keepdim=True) + 1e-8)
-
-        motif_weighted = torch.sum(node_attn.unsqueeze(-1) * motif_Z_all, dim=1)
-        fused = self.out_proj(torch.cat([base_Z, motif_weighted], dim=1))
-        return fused, node_attn
-
-# ----------------- Final model: SDM-GNN (multi-channel) -----------------
+# ----------------- Final model: SDM-GNN -----------------
 class SDM_GNN(nn.Module):
-    def __init__(self, base_enc: Encoder, motif_mats: list, dim: int, disable_motif: bool = False):
+    def __init__(self, base_enc: Encoder, motif_prop: MotifPropagate, dim: int, disable_motif: bool = False):
         super().__init__()
         self.enc = base_enc
+        self.mprop = motif_prop
         self.disable_motif = disable_motif
-        self.dim = dim
-
-        self.num_motifs = len(motif_mats)
-        self.mprop = MotifPropagateMulti(motif_mats) if not disable_motif else None
-        
-        # ---- Learnable global motif weights ----
-        self.motif_weights = nn.Parameter(0.01 * torch.randn(self.num_motifs)) if not disable_motif else None
-
-        # ---- Fusion module (node-level attention + global modulation) ----
-        self.fuse = MotifFusionMulti(dim, self.num_motifs) if not disable_motif else None
-
-        # ---- Post-fusion feedforward network ----
+        self.fuse = MotifFusion(dim)
         self.ffn = nn.Sequential(
             nn.Linear(dim, dim),
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(dim, dim)
         )
-
-        # ---- Edge scorer ----
         self.edge_scorer = nn.Bilinear(dim, dim, 1)
 
-    @torch.no_grad()
-    def compute_all_base_embeddings(self, num_nodes: int, batch: int = 4096):
-        """Efficiently compute base encoder embeddings for all nodes to feed motif propagation."""
-        out = []
-        for i in range(0, num_nodes, batch):
-            idx = torch.arange(i, min(i + batch, num_nodes), dtype=torch.long, device=DEV)
-            out.append(self.enc(idx))
-        return torch.cat(out, dim=0)  # [N, d]
+    def forward_batch(self, batch_nodes, Z_motif_cache):
+        if isinstance(batch_nodes, (list, np.ndarray)):
+            batch_idx = torch.as_tensor(batch_nodes, dtype=torch.long, device=DEV)
+        else:
+            batch_idx = batch_nodes.to(DEV)
 
-    def forward_nodes(self, node_idx_tensor, Z_all=None, motif_embs_all=None):
-        """
-        Forward for a set of nodes.
-        If Z_all/motif_embs_all are precomputed, we can index into them.
-        Returns: Z_final, batch_idx, node_attn
-        """
-        batch_idx = node_idx_tensor.to(DEV)
-        Z_edge_batch = self.enc(batch_idx) if Z_all is None else Z_all[batch_idx]
+        Z_edge_batch  = self.enc(batch_idx)                 # with grad
 
         if self.disable_motif:
             Z_final = self.ffn(Z_edge_batch)
             return Z_final, batch_idx
 
-        if motif_embs_all is None:
-            raise RuntimeError("motif_embs_all must be precomputed per epoch.")
+        Z_motif_batch = self.mprop.alpha * Z_motif_cache[batch_idx]  # alpha learns
 
-        # Extract motif embeddings for this batch
-        motif_embs_batch = motif_embs_all[batch_idx]
-
-        # ---- Integrate global motif weights in fusion ----
-        Z_fused, node_attn = self.fuse(Z_edge_batch, motif_embs_batch, global_motif_weights=self.motif_weights)
-
+        Z_fused = self.fuse(Z_edge_batch, Z_motif_batch)
         Z_final = self.ffn(Z_fused)
-        return Z_final, batch_idx, node_attn
+        return Z_final, batch_idx
 
-# ----------------- BCE loss only (direct objective) -----------------
-def sign_bce_loss(scores, labels, w_pos=1.0, w_neg=1.0):
-    """
-    scores: [B,1] logits, labels: [B,1] in {0,1}
-    """
-    bce = F.binary_cross_entropy_with_logits(scores, labels, reduction='none')
-    weights = w_pos * labels + w_neg * (1 - labels)
-    return (weights * bce).mean()
+    def precompute_motif_features(self, num_nodes):
+        with torch.no_grad():
+            idx = torch.arange(num_nodes, dtype=torch.long, device=DEV)
+            Z_edge_all = self.enc(idx)
+            S = torch.sparse.mm(self.mprop.M, Z_edge_all)
+        return S
 
-# ----------------- Data loading & helpers -----------------
+# ----------------- Losses -----------------
+def bpr_loss(pos_scores, neg_scores):
+    return F.softplus(neg_scores - pos_scores).mean()
 def infer_num_nodes_from_edgelists(dataset, k):
     max_id = -1
     for split in ['train', 'test']:
@@ -326,7 +254,16 @@ def infer_num_nodes_from_edgelists(dataset, k):
     if max_id < 0:
         raise RuntimeError(f'No edges found for {dataset}, fold {k}. Check your paths.')
     return max_id + 1
+# NEW: per-sample weighting (upweight negatives)
+def sign_bce_loss(scores, labels, w_pos=1.0, w_neg=1.0):
+    """
+    scores: [B,1] logits, labels: [B,1] in {0,1}
+    """
+    bce = F.binary_cross_entropy_with_logits(scores, labels, reduction='none')
+    weights = w_pos * labels + w_neg * (1 - labels)
+    return (weights * bce).mean()
 
+# ----------------- Data loading & helpers -----------------
 def load_edgelist_signed(filename):
     pos_out = defaultdict(list); pos_in = defaultdict(list)
     neg_out = defaultdict(list); neg_in = defaultdict(list)
@@ -371,6 +308,7 @@ class MetricsLogger:
         self.metrics = {
             'epoch': [],
             'loss_total': [],
+            'loss_bpr': [],
             'loss_bce': [],
             'time': [],
             'pos_ratio': [],
@@ -378,24 +316,23 @@ class MetricsLogger:
             'f1_macro': [],
             'f1_negative': [],
             'f1_positive': [],
-            'auc': [],
-            'aupr': []
+            'auc': []
         }
     
-    def log_train(self, epoch, loss_total, loss_bce, elapsed):
+    def log_train(self, epoch, loss_total, loss_bpr, loss_bce, elapsed):
         self.metrics['epoch'].append(epoch)
         self.metrics['loss_total'].append(loss_total)
+        self.metrics['loss_bpr'].append(loss_bpr)
         self.metrics['loss_bce'].append(loss_bce)
         self.metrics['time'].append(elapsed)
     
-    def log_eval(self, pos_ratio, acc, f1_0, f1_1, f1_2, auc, aupr):
+    def log_eval(self, pos_ratio, acc, f1_0, f1_1, f1_2, auc):
         self.metrics['pos_ratio'].append(pos_ratio)
         self.metrics['accuracy'].append(acc)
         self.metrics['f1_macro'].append(f1_2)
         self.metrics['f1_negative'].append(f1_0)
         self.metrics['f1_positive'].append(f1_1)
         self.metrics['auc'].append(auc)
-        self.metrics['aupr'].append(aupr)
     
     def save(self):
         filepath = os.path.join(self.log_dir, f'metrics_motif_{self.dataset}_k{self.k}.json')
@@ -406,65 +343,14 @@ class MetricsLogger:
     def print_summary(self, epoch):
         print(f"\nEpoch {epoch:03d} Summary:")
         print(f"  Loss Total: {self.metrics['loss_total'][-1]:.4f}")
+        print(f"  Loss BPR:   {self.metrics['loss_bpr'][-1]:.4f}")
         print(f"  Loss BCE:   {self.metrics['loss_bce'][-1]:.4f}")
         print(f"  Time:       {self.metrics['time'][-1]:.2f}s")
         if self.metrics['accuracy']:
             print(f"  Accuracy:   {self.metrics['accuracy'][-1]:.4f}")
             print(f"  AUC:        {self.metrics['auc'][-1]:.4f}")
-            print(f"  PR-AUC:     {self.metrics['aupr'][-1]:.4f}")
             print(f"  F1-Macro:   {self.metrics['f1_macro'][-1]:.4f}")
 
-
-class MotifVisualizer:
-    def __init__(self, motif_names, log_dir, dataset, k):
-        self.motif_names = motif_names
-        self.log_dir = log_dir
-        self.dataset = dataset
-        self.k = k
-        self.weight_history = []
-        self.attn_history = []
-
-    def log_epoch(self, motif_weights, motif_attn=None):
-        """Store motif weight vector and optional per-node attention."""
-        if motif_weights is not None:
-            w = torch.softmax(motif_weights, dim=0).detach().cpu().numpy()
-            self.weight_history.append(w)
-        if motif_attn is not None:
-            mean_attn = motif_attn.mean(dim=0).detach().cpu().numpy()
-            self.attn_history.append(mean_attn)
-
-    def plot(self):
-        """Save visualizations of motif weights and average attention over epochs."""
-        if not self.weight_history:
-            print("No motif weights recorded, skipping visualization.")
-            return
-
-        epochs = np.arange(len(self.weight_history))
-        weights = np.stack(self.weight_history, axis=0)  # [E, 16]
-        fig, ax = plt.subplots(figsize=(10, 6))
-        for i, name in enumerate(self.motif_names):
-            ax.plot(epochs, weights[:, i], label=name)
-        ax.set_xlabel('Epoch')
-        ax.set_ylabel('Motif Weight')
-        ax.set_title('Evolution of Learnable Motif Weights')
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.log_dir, f'motif_weights_{self.dataset}_k{self.k}.png'))
-        plt.close(fig)
-
-        if self.attn_history:
-            attn = np.stack(self.attn_history, axis=0)
-            fig, ax = plt.subplots(figsize=(10, 6))
-            for i, name in enumerate(self.motif_names):
-                ax.plot(epochs, attn[:, i], label=name)
-            ax.set_xlabel('Epoch')
-            ax.set_ylabel('Average Attention Weight')
-            ax.set_title('Evolution of Mean Node-Level Motif Attention')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
-            plt.tight_layout()
-            plt.savefig(os.path.join(self.log_dir, f'motif_attention_{self.dataset}_k{self.k}.png'))
-            plt.close(fig)
-        print(f"✅ Saved motif visualizations in {self.log_dir}")
 # ----------------- Training -----------------
 def run(dataset, k):
     N = infer_num_nodes_from_edgelists(dataset, k)
@@ -479,7 +365,7 @@ def run(dataset, k):
     features = nn.Embedding(N, FEA, device=DEV)
     features.weight.requires_grad_(True)
 
-    # Four adjacencies (for base encoder)
+    # Four adjacencies
     A_list = [pos_out, pos_in, neg_out, neg_in]
     A_csr = [adj_from_dict([A_list[i]], N) for i in range(4)]
 
@@ -487,31 +373,27 @@ def run(dataset, k):
     Agg = AttentionAggregator if args.agg == 'attention' else MeanAggregator
     aggs = [Agg(features, FEA, FEA, N) for _ in range(4)]
 
-    # Build base encoder
+    # Build encoder
     enc = Encoder(features, FEA, EMB, A_csr, aggs).to(DEV)
 
-    # --------- Build 16 motif channels (normalized + torch.sparse) ---------
+    # Motif matrices
     motif_csr_dict = build_signed_directed_motif_adj(
         pos_in=pos_in, pos_out=pos_out, neg_in=neg_in, neg_out=neg_out, num_nodes=N
     )
-    motif_csr_list, motif_names = motif_dict_to_ordered_list(motif_csr_dict)
-    motif_sparse_list = normalize_each_and_to_torch(motif_csr_list, DEV)
+    Msum = combine_motif_set(motif_csr_dict, weights=None)
+    Mnorm = spectrally_normalize(Msum)
+    M_torch = scipy_csr_to_torch_sparse(Mnorm, DEV)
+    mprop = MotifPropagate(M_torch).to(DEV)
 
     # Model
-    model = SDM_GNN(enc, motif_sparse_list, EMB, disable_motif=args.disable_motif).to(DEV)
+    model = SDM_GNN(enc, mprop, EMB, disable_motif=args.disable_motif).to(DEV)
 
-    if not args.disable_motif:
-        base_params = [p for n, p in model.named_parameters() if n != "motif_weights"]
-        opt = torch.optim.Adam(
-            [{'params': base_params, 'lr': LR,        'weight_decay': WD},
-            {'params': [model.motif_weights], 'lr': LR * 0.1, 'weight_decay': 0.0}]
-        )
-    else:
-        opt = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
+    # Optimizer with gradient clipping
+    opt = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
 
     if args.lr_sched == 'plateau':
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            opt, mode='max', factor=args.lr_factor, patience=args.lr_patience)
+        opt, mode='max', factor=args.lr_factor, patience=args.lr_patience)
     elif args.lr_sched == 'step':
         scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=args.step_size, gamma=args.lr_factor)
     elif args.lr_sched == 'cosine':
@@ -524,29 +406,46 @@ def run(dataset, k):
     neg_edges = [(u, v, 0) for u, nbrs in neg_out.items() for v in nbrs]
     all_edges = pos_edges + neg_edges
 
-    # Positive sets for negatives / filtering
+    pos_nbrs = defaultdict(set)
+    neg_nbrs = defaultdict(set)
+    for (u, v, _) in pos_edges:
+        pos_nbrs[u].add(v)
+    for (u, v, _) in neg_edges:
+        neg_nbrs[u].add(v)
+
+
+    # Positive sets for negatives / hard-negative filtering
     pos_sets = defaultdict(set)
-    for u, v, s in all_edges:
-        if s == 1:
-            pos_sets[u].add(v)
+    for u, v, _ in all_edges:
+        pos_sets[u].add(v)
 
     print(f"\nTraining on {len(all_edges)} edges ({len(pos_edges)} pos, {len(neg_edges)} neg)")
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # --- Balanced batch sampler (1:1 pos/neg with replacement) ---
-    pos_only = [(u, v, 1) for (u, v, _) in pos_edges]
-    neg_only = [(u, v, 0) for (u, v, _) in neg_edges]
-
+    pos_only = [(u,v,1) for (u,v,_) in pos_edges]
+    neg_only = [(u,v,0) for (u,v,_) in neg_edges]
+    
     def next_batch(B):
         bp = B // 2
         bn = B - bp
-        P = random.choices(pos_only, k=bp if len(pos_only) < bp else bp)
-        Nn = random.choices(neg_only, k=bn)
+        P = random.choices(pos_only, k=min(bp, len(pos_only))) if len(pos_only) >= bp else random.choices(pos_only, k=bp)
+        Nn = random.choices(neg_only, k=bn)  # oversample negs if needed
         batch = P + Nn
         random.shuffle(batch)
         return batch
+    
 
-    w_pos, w_neg = 1.0, 1.0
+    USE_BALANCED_BATCH = True  # you already have a balanced sampler
+
+    if USE_BALANCED_BATCH:
+        w_pos, w_neg = 1.0, 1.0   # sampler handles class balance
+    else:
+        # fallback (your original weighting)
+        w_pos = 1.0
+        w_neg = len(pos_edges) / max(1, len(neg_edges))
+
+
 
     best_auc = -float('inf')
     best_epoch = -1
@@ -554,19 +453,18 @@ def run(dataset, k):
     best_model_path = os.path.join(OUTDIR, f'best-model-{dataset}-k{k}.pt')
     best_embed_path = os.path.join(OUTDIR, f'best-embedding-{dataset}-{k}.npy')
 
-    visualizer = MotifVisualizer(motif_names, LOGDIR, dataset, k)
-
     for epoch in range(EPOCHS + 1):
         model.train()
         t0 = time.time()
 
-        # ===== Phase 1: precompute base embeddings (no grad) =====
-        with torch.no_grad():
-            Z_all = model.compute_all_base_embeddings(N)  # [N, d]
+        # ============ PHASE 1: Pre-compute motif features ============
+        Z_motif_cache = None if args.disable_motif else model.precompute_motif_features(N)
 
-        # ===== Phase 2: mini-batch training (rebuild motif graph per batch) =====
+
+        # ============ PHASE 2: Mini-batch training ============
         total_loss = 0.0
-        total_bce  = 0.0
+        total_bpr = 0.0
+        total_bce = 0.0
         num_batches = 0
 
         num_steps = max(1, len(all_edges) // BATCH)
@@ -574,78 +472,129 @@ def run(dataset, k):
             batch = next_batch(BATCH)
             opt.zero_grad()
 
-            # Build batch node set
-            batch_nodes = list(set([u for (u, v, _) in batch] + [v for (_, v, _) in batch]))
-            batch_idx = torch.as_tensor(batch_nodes, dtype=torch.long, device=DEV)
+            # Build batch node set and random negatives for fallback
+            batch_nodes = set([u for (u,v,_) in batch] + [v for (_,v,_) in batch])
+            rand_neg_by_u = {}
+            for (u,v,y) in batch:
+                if y == 1:
+                    vn = sample_negative(u, N, pos_sets[u])
+                    if vn is not None:
+                        rand_neg_by_u[u] = vn
+                        batch_nodes.add(vn)
+            batch_nodes = list(batch_nodes)
 
-            # Slice base embeddings for this batch (constant for the epoch)
-            Z_batch = Z_all[batch_idx]  # [B_nodes, d], no grad (fine)
-
-            # Recompute motif embeddings for the WHOLE graph WITH GRAD (fresh graph per batch)
-            if not args.disable_motif:
-                # this ties the loss to motif_weights and avoids "second backward" by rebuilding each batch
-                motif_embs_all, _ = model.mprop(Z_all, model.motif_weights)  # DO NOT detach
-                motif_embs_batch = motif_embs_all[batch_idx]                 # [B_nodes, M, d]
-                Z_fused, node_attn = model.fuse(Z_batch, motif_embs_batch, global_motif_weights=model.motif_weights)  # [B_nodes, d], [B_nodes, M]
-            else:
-                Z_fused = Z_batch
-
-            Z_final = model.ffn(Z_fused)  # [B_nodes, d]
-
-            # Map node ids to positions in the batch tensor
+            # Forward pass for batch nodes
+            Z_batch, batch_idx = model.forward_batch(batch_nodes, Z_motif_cache)
             node_to_idx = {int(n.item()): i for i, n in enumerate(batch_idx)}
-            u_list = [node_to_idx[u] for (u, _, _) in batch]
-            v_list = [node_to_idx[v] for (_, v, _) in batch]
-            lbl = torch.tensor([y for (_, _, y) in batch], device=DEV, dtype=torch.float32).view(-1, 1)
 
-            # Edge logits and loss
-            logits = model.edge_scorer(Z_final[u_list], Z_final[v_list])  # [B,1]
+            # --- BPR with HARD negatives in-batch ---
+            pos_pairs = [(u,v) for (u,v,y) in batch if y==1]
+            pos_s, neg_s = [], []
+
+            # Precompute candidate matrix for hard negs
+            cand_nodes = batch_nodes
+            cand_idx = torch.as_tensor([node_to_idx[n] for n in cand_nodes], device=DEV)
+            Z_cand = Z_batch[cand_idx]  # [C, d]
+
+            for (u,v) in pos_pairs:
+                ui = node_to_idx[u]
+                vi = node_to_idx[v]
+
+                # score(u, all candidates)
+                u_rep = Z_batch[ui].unsqueeze(0).expand(Z_cand.size(0), -1)
+                cand_scores = model.edge_scorer(u_rep, Z_cand).squeeze(-1)  # [C]
+
+                forbid = torch.zeros_like(cand_scores, dtype=torch.bool)
+                forbid[cand_idx == ui] = True
+                forbid[cand_idx == vi] = True
+
+                # forbid only positive neighbors (let observed negatives be candidates)
+                if u in pos_nbrs:
+                    for vv in pos_nbrs[u]:
+                        if vv in node_to_idx:
+                            forbid[cand_idx == node_to_idx[vv]] = True
+
+                cand_scores = cand_scores.masked_fill(forbid, float('-inf'))
+
+                # pick hardest remaining
+                order = torch.argsort(cand_scores, descending=True).tolist()
+                vn = None
+                for r in order:
+                    vv = cand_nodes[r]
+                    if vv is not None:
+                        vn = vv
+                        break
+                if vn is None:
+                    vn = rand_neg_by_u.get(u, None)
+                    if vn is None or vn not in node_to_idx:
+                        continue  # no neg found; skip this pair
+
+                vni = node_to_idx[vn]
+                s_pos = model.edge_scorer(Z_batch[ui].unsqueeze(0), Z_batch[vi].unsqueeze(0)).squeeze()
+                s_neg = model.edge_scorer(Z_batch[ui].unsqueeze(0), Z_batch[vni].unsqueeze(0)).squeeze()
+                pos_s.append(s_pos)
+                neg_s.append(s_neg)
+
+            if pos_s:
+                pos_scores = torch.stack(pos_s)
+                neg_scores = torch.stack(neg_s)
+                loss_bpr = bpr_loss(pos_scores, neg_scores)
+            else:
+                loss_bpr = torch.tensor(0.0, device=DEV)
+
+            # --- Sign BCE on observed edges (balanced weights) ---
+            u_list = [node_to_idx[u] for (u,_,_) in batch]
+            v_list = [node_to_idx[v] for (_,v,_) in batch]
+            lbl = torch.tensor([y for (_,_,y) in batch], device=DEV, dtype=torch.float32).view(-1,1)
+
+            u_emb = Z_batch[u_list]
+            v_emb = Z_batch[v_list]
+            logits = model.edge_scorer(u_emb, v_emb)  # [B,1]
             loss_bce = sign_bce_loss(logits, lbl, w_pos=w_pos, w_neg=w_neg)
-            loss = args.sign_bce_weight * loss_bce
-            # >>> alignment regularizer (keeps node attention consistent with global) <<<
-            if not args.disable_motif:
-                global_soft = torch.softmax(model.motif_weights, dim=0)      # [M]
-                node_mean   = node_attn.mean(dim=0)                          # [M]
-                align_loss  = F.mse_loss(node_mean, global_soft)
-                loss = loss + 0.01 * align_loss   # tweak 0.01 in [0.003, 0.03] if needed
-            # Backward & step
+
+            # --- Total loss ---
+            loss = args.bpr_weight * loss_bpr + args.sign_bce_weight * loss_bce
             loss.backward()
-            # (Optional) Inspect grad flow:
-            # if hasattr(model, "motif_weights") and model.motif_weights.grad is not None:
-            #     print("Motif grad norm:", model.motif_weights.grad.norm().item())
+
+            # Gradient clipping
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             opt.step()
 
             total_loss += float(loss.item())
-            total_bce  += float(loss_bce.item())
+            total_bpr += float(loss_bpr.item())
+            total_bce += float(loss_bce.item())
             num_batches += 1
 
+        # Averages
         avg_loss = total_loss / num_batches
-        avg_bce  = total_bce  / num_batches
-        elapsed  = time.time() - t0
+        avg_bpr = total_bpr / num_batches
+        avg_bce = total_bce / num_batches
+        elapsed = time.time() - t0
 
-        logger.log_train(epoch, avg_loss, avg_bce, elapsed)
-        attn_info = "disabled" if args.disable_motif else f"mean_w={float(model.motif_weights.mean().item()):.3f}"
-        print(f"Epoch {epoch:03d} | Loss: {avg_loss:.4f} (BCE: {avg_bce:.4f}) "
-              f"| motif_weights={attn_info} | Time: {elapsed:.2f}s")
+        # Log training metrics + alpha
+        logger.log_train(epoch, avg_loss, avg_bpr, avg_bce, elapsed)
+        alpha_val = model.mprop.alpha.item() if not args.disable_motif else float('nan')
+        print(f"Epoch {epoch:03d} | Loss: {avg_loss:.4f} (BPR: {avg_bpr:.4f}, BCE: {avg_bce:.4f}) "
+            f"| alpha={alpha_val:.3f} | Time: {elapsed:.2f}s")
+        
+       
 
-        # ===== Evaluation =====
+        # Evaluation
         if epoch % args.eval_every == 0:
             model.eval()
             with torch.no_grad():
-                Z_all = model.compute_all_base_embeddings(N)
-
+                idx = torch.arange(N, dtype=torch.long, device=DEV)
+                Z_edge_final = model.enc(idx)
                 if args.disable_motif:
-                    Z_final_full = model.ffn(Z_all)
-                    node_attn = None
+                    Z_final = model.ffn(Z_edge_final).cpu().numpy()
                 else:
-                    motif_embs_all, _ = model.mprop(Z_all, model.motif_weights)  # eval graph, no grad
-                    Z_fused_full, node_attn = model.fuse(Z_all, motif_embs_all, global_motif_weights=model.motif_weights)
-                    Z_final_full = model.ffn(Z_fused_full)
+                    Z_motif_base  = model.precompute_motif_features(N)
+                    Z_motif_final = model.mprop.alpha * Z_motif_base
+                    Z_fused_final = model.fuse(Z_edge_final, Z_motif_final)
+                    Z_final       = model.ffn(Z_fused_final).cpu().numpy()
 
-                Z_tensor = Z_final_full  # [N, d], still a torch tensor (no need to numpy yet)
+                Z_tensor = torch.from_numpy(Z_final).to(DEV)
 
-                # Load test edges
                 test_pairs, test_labels = [], []
                 test_path = f'./experiment-data/{dataset}-test-{k}.edgelist'
                 with open(test_path) as fp:
@@ -659,71 +608,58 @@ def run(dataset, k):
                 v = torch.as_tensor([j for (_, j) in test_pairs], device=DEV, dtype=torch.long)
 
                 logits = model.edge_scorer(Z_tensor[u], Z_tensor[v]).squeeze(-1)
-                prob   = torch.sigmoid(logits).detach().cpu().numpy()
-                pred   = (prob >= 0.5).astype(int)
-
-            # Log visualizer with eval-time attention (stable)
-            # (Optional: log softmax for readability inside visualizer)
-            visualizer.log_epoch(model.motif_weights, motif_attn=(node_attn.detach() if node_attn is not None else None))
+                prob   = torch.sigmoid(logits).cpu().numpy()
 
             roc  = roc_auc_score(test_labels, prob)
             aupr = average_precision_score(test_labels, prob)
-            acc  = accuracy_score(test_labels, pred)
-            f1p  = f1_score(test_labels, pred, pos_label=1)
-            f1n  = f1_score(test_labels, pred, pos_label=0)
-            f1m  = f1_score(test_labels, pred, average='macro')
-            pos_ratio = float(np.mean(test_labels))
+            print(f"  (internal) ROC-AUC={roc:.4f}, PR-AUC={aupr:.4f}")
+            # Save embeddings
+            np.save(os.path.join(OUTDIR, f'embedding-{dataset}-{k}-{epoch}.npy'), Z_final)
 
-            print(f"  Eval  ROC-AUC={roc:.4f}, PR-AUC={aupr:.4f}, Acc={acc:.4f}, F1+={f1p:.4f}, F1-={f1n:.4f}")
+            # Evaluate (ensure your logistic probe uses Hadamard/L1/L2 + scaling)
+            pos_ratio, acc, f1_0, f1_1, f1_2, auc = logistic_embedding(
+                k=k, dataset=dataset, epoch=epoch, dirname=OUTDIR
+            )
 
-            # Save embeddings & attention
-            np.save(os.path.join(OUTDIR, f'embedding-{dataset}-{k}-{epoch}.npy'),
-                    Z_final_full.detach().cpu().numpy())
-            if node_attn is not None:
-                np.save(os.path.join(OUTDIR, f'node_motif_attention-{dataset}-{k}-{epoch}.npy'),
-                        node_attn.detach().cpu().numpy())
-
-            logger.log_eval(pos_ratio, acc, f1n, f1p, f1m, roc, aupr)
+            logger.log_eval(pos_ratio, acc, f1_0, f1_1, f1_2, auc)
             logger.print_summary(epoch)
 
-            # LR scheduling & early stopping
             if scheduler:
                 if args.lr_sched == 'plateau':
-                    scheduler.step(roc)
+                    scheduler.step(auc)   # monitors validation AUC
                 else:
-                    scheduler.step()
+                    scheduler.step()      # step/cosine advance each epoch
 
-            if roc > best_auc + args.min_delta:
-                best_auc = roc
+            # --- Early stopping on AUC ---
+            if auc > best_auc + args.min_delta:
+                best_auc = auc
                 best_epoch = epoch
                 no_improve = 0
+                # Save best weights + embeddings
                 torch.save(
-                    {
-                        'epoch': epoch,
-                        'state_dict': model.state_dict(),
-                        'auc': roc,
-                        # Optional: store softmax (interpretable) instead of raw weights
-                        'motif_weights': None if args.disable_motif
-                        else torch.softmax(model.motif_weights, dim=0).detach().cpu().numpy(),
-                    },
+                    {'epoch': epoch,
+                    'state_dict': model.state_dict(),
+                    'auc': auc,
+                    'alpha': float(model.mprop.alpha.data.item()),
+                    'lr': _get_lr(opt)},
                     best_model_path
                 )
-                np.save(best_embed_path, Z_final_full.detach().cpu().numpy())
+                # We already have Z_final here
+                np.save(best_embed_path, Z_final)
                 print(f"[BEST] AUC improved to {best_auc:.4f} @ epoch {best_epoch}. Saved best model/embeddings.")
             else:
                 no_improve += 1
                 print(f"No AUC improvement for {no_improve} evals (best {best_auc:.4f} @ {best_epoch}).")
                 if no_improve >= args.early_stop_patience:
                     print(f"Early stopping triggered (patience={args.early_stop_patience}). "
-                          f"Best AUC={best_auc:.4f} at epoch {best_epoch}.")
+                        f"Best AUC={best_auc:.4f} at epoch {best_epoch}.")
                     break
         else:
             if scheduler and args.lr_sched in ('step', 'cosine'):
                 scheduler.step()
-            print(f"  (lr={opt.param_groups[0]['lr']:.2e})")
+            print(f"  (lr={_get_lr(opt):.2e})")
 
-    if not args.disable_motif:
-        visualizer.plot()
+    # Save metrics to file
     logger.save()
 
 def main():
